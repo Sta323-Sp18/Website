@@ -50,12 +50,12 @@
             {{ if gt (len .readings) 0 }}
               <ul>
               {{ range .readings }}
-                <li> <a href="{{ .link }}">{{ .text }}</a> </li>
+                <li> <a href="{{ .link | safeHTMLAttr }}">{{ .text }}</a> </li>
               {{ end }}
               </ul>
             {{ end }}
           </td>
-          <td class="schedule-notes">{{ .notes }}</td>
+          <td class="schedule-notes">{{ .notes | safeHTML}}</td>
           <td> </td>
         </tr>
       {{ end }}
