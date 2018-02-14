@@ -1,0 +1,235 @@
+---
+title: "More purrr"
+output: html_document
+---
+
+## Setup
+
+```{r}
+library(dplyr)
+library(purrr)
+```
+
+## Example 2 from Tuesday
+
+```{r}
+primes = c( 2,  3,  5,  7, 11, 13, 17, 19, 23, 29, 31, 37,
+           43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97)
+
+x = c(3, 4, 12, 19, 23, 48, 50, 61, 63, 78)
+```
+
+* for loop
+
+```{r}
+f1 = function() {
+  
+  res = c()
+  for (v in x) {
+    if (!v %in% primes)
+      res = c(res, v)
+  }
+  res
+  
+}
+
+f1()
+```
+
+
+* with subsetting
+
+```{r}
+f2 = function() {
+  x[ !x %in% primes]
+}
+
+f2()
+```
+
+* with an apply / map
+
+```{r}
+f3 = function() {
+  x[ sapply(x, function(v) !v %in% primes) ]
+}
+
+f4 = function() {
+  lapply(x, function(v) if (!v %in% primes) v else NULL) %>% unlist()
+}
+
+f5 = function() {
+  map(x, function(v) if (!v %in% primes) v else NULL) %>% unlist()
+}
+
+f6 = function() {
+  keep(x, function(v) !v %in% primes)
+}
+
+f7 = function() {
+  discard(x, function(v) v %in% primes)
+}
+```
+
+### Benchmarking
+
+```{r}
+library(microbenchmark)
+
+microbenchmark(f1(), f2(), f3(), f4(), f5(), f6(), f7())
+
+x = sample(1:100, 1e3, replace = TRUE)
+microbenchmark(f1(), f2(), f3(), f4(), f5(), f6(), f7())
+```
+
+
+
+## More repurrrsive
+
+```{r}
+library(repurrrsive)
+```
+
+
+### `sw_people`
+
+```{r error=TRUE}
+map_dfr(sw_people, ~.x)
+
+map_dfr(sw_people, ~ as_data_frame(.x))
+
+
+do.call(rbind, sw_people)
+
+do.call(rbind, sw_people) %>% 
+  tbl_df() %>%
+  mutate(name = unlist(name))
+```
+
+```{r}
+df_f1 = function() {
+  data_frame(
+    name = map_chr(sw_people, "name"),
+    height = map_chr(sw_people, "height") %>% parse_numeric(),
+    mass = map_chr(sw_people, "mass") %>% parse_numeric(),
+    starships = map(sw_people, "starships")
+  )
+}
+
+
+parse_numeric = function(x) {
+  suppressWarnings(
+    x %>%
+      stringr::str_replace(",","") %>%
+      as.numeric()
+  )
+}
+
+df_f2 = function() {
+  map_dfr(
+    sw_people,
+    function(char) {
+      data_frame(
+        name = char %>% pluck("name"), 
+        height = char %>% pluck("height") %>% parse_numeric(),
+        mass = char %>% pluck("mass") %>% parse_numeric(),
+        starships = char %>% pluck("starships") %>% list()
+      )
+    }
+  )
+}
+
+microbenchmark(df_f1(), df_f2(), times = 1)
+```
+
+#### unnest and starships
+
+```{r error=TRUE}
+data_frame(
+  name = map_chr(sw_people, "name"),
+  height = map_chr(sw_people, "height") %>% parse_numeric(),
+  mass = map_chr(sw_people, "mass") %>% parse_numeric(),
+  starships = map(sw_people, "starships")
+) %>%
+  mutate(starships = map(starships, ~ if(is.null(.x)) NULL else .x)) %>%
+  tidyr::unnest()
+
+
+
+data_frame(
+  name = map_chr(sw_people, "name"),
+  height = map_chr(sw_people, "height") %>% parse_numeric(),
+  mass = map_chr(sw_people, "mass") %>% parse_numeric(),
+  starships = map(sw_people, "starships")
+) %>%
+  mutate(starships = map(starships, ~ if(is.null(.x)) NA else .x)) %>%
+  tidyr::unnest()
+```
+
+
+
+
+
+## List Columns
+
+### HW2 Q6
+
+6. What are the seven most popular hobbies of lego purchasers?
+
+```{r error=TRUE}
+sales = readRDS("data/lego_sales.rds")
+
+sales %>%
+  distinct(first_name, last_name) %>%
+  nrow()
+ 
+sales %>%
+  distinct(first_name, last_name, hobbies) %>%
+  nrow()
+
+
+sales %>%
+  group_by(first_name, last_name) %>%
+  slice(1) %>%
+  select(hobbies) %>% 
+  transmute(hobbies = unlist(hobbies))
+```
+  
+#### dplyr only approach  
+  
+```{r}
+sales %>%
+  group_by(first_name, last_name) %>%
+  slice(1) %>%
+  pull(hobbies) %>%
+  unlist() %>%
+  data_frame(hobbies = .) %>%
+  group_by(hobbies) %>%
+  count() %>%
+  ungroup() %>%
+  arrange(desc(n)) %>%
+  top_n(7)
+``` 
+
+
+#### dplyr + tidyr  approach  
+  
+```{r}
+sales %>%
+  group_by(first_name, last_name) %>%
+  slice(1) %>%
+  ungroup() %>%
+  select(first_name, last_name, hobbies) 
+
+sales %>%
+  group_by(first_name, last_name) %>%
+  slice(1) %>%
+  ungroup() %>%
+  select(first_name, last_name, hobbies) %>%
+  tidyr::unnest() %>%
+  group_by(hobbies) %>%
+  count() %>%
+  ungroup() %>%
+  arrange(desc(n)) %>%
+  top_n(7)
+``` 

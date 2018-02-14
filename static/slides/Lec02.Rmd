@@ -1,0 +1,112 @@
+---
+title: "git & GitHub"
+author: "Colin Rundel"
+date: "2018-01-19"
+output:
+  xaringan::moon_reader:
+    css: "slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+exclude: true
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+options(
+  htmltools.dir.version = FALSE, # for blogdown
+  width=80
+)
+
+library(emo)
+htmltools::tagList(rmarkdown::html_dependency_font_awesome())
+```
+
+---
+class: middle
+count: false
+
+# Git Background
+
+---
+class: center
+
+## Why version control?
+
+```{r echo=FALSE}
+knitr::include_graphics("imgs/phd_comics_vc.gif")
+```
+
+---
+
+## Why version control?
+
+* Simple formal system for tracking all changes to a project
+
+* Time machine for your projects
+    * Track blame and/or praise
+    * Remove the fear of breaking things
+
+* Learning curve is steep, but when you need it you *REALLY* need it
+
+<br/>
+<br/>
+
+--
+
+> Your closest collaborator is you six months ago, but you don't reply to emails.
+> - Paul Wilson, UW-Madison
+
+
+---
+
+## Why git?
+
+* Distributed
+    * Work online or offline
+    * Collaborate with large groups
+
+* Popular
+    * Active development
+    * Shiny new tools and ecosystems
+    * Fast
+
+* Tracks any type of file
+    * Works best with text 
+
+* Branching
+    * Smart merges
+---
+class: middle
+
+# Live Demo
+
+---
+
+## Some initial configuration
+
+We want to let `git` know who we are so there are some simple configuration options we should setup.
+
+Let's first tell `git` who we are, and what editor we want to use.
+
+```bash
+$ git config --global user.name "Colin Rundel"
+$ git config --global user.email "rundel@gmail.com"
+$ git config --global push.default simple
+$ git config --global core.editor nano
+$ git config --global credential.helper 'cache --timeout=600000'
+```
+
+We also want to do this on every machine we will be using - `local`, `saxon`, `OIT VM`, etc.
+
+---
+
+# Acknowledgments
+
+## Acknowledgments
+Above materials are derived in part from the following sources:
+
+* Karl Broman - [Wisc's Tools4RR](http://kbroman.org/Tools4RR/)
+* [Software Carpentry Project](http://software-carpentry.org/)

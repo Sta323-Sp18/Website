@@ -1,0 +1,560 @@
+---
+title: "R data structures"
+author: "Colin Rundel"
+date: "2018-01-23"
+output:
+  xaringan::moon_reader:
+    css: "slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+exclude: true
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+options(
+  htmltools.dir.version = FALSE, # for blogdown
+  width=80
+)
+
+library(emo)
+htmltools::tagList(rmarkdown::html_dependency_font_awesome())
+```
+
+---
+class: middle
+count: false
+
+# From last week
+
+
+---
+
+## Exercise 2
+
+Below is the list of primes between 2 and 100:
+```
+2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 
+43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97
+```
+
+If you were given the vector `x = c(3, 4, 12, 19, 23, 48, 50, 61, 63, 78)`, write out the R code necessary to print only the values of `x` that are *not* prime (without using subsetting or the `%in%` operator). 
+
+Your code should use *nested* loops to iterate through the vector of primes and `x`.
+
+---
+class: middle
+count: false
+
+# Overview
+
+---
+
+## Data structures and dimensionality
+
+.middle[
+
+  Dimensions  |  Homogeneous  | Heterogeneous
+--------------|:--------------|:----------------------
+  1*d*        | Atomic Vector | List (Generic Vector)
+  2*d*        |     Matrix    | Data Frame
+  n*d*        |     Array     | `NA`
+
+]
+
+---
+class: middle
+count: false
+
+# Atomic Vectors
+
+---
+
+## Atomic Vectors
+
+R has six atomic vector types: 
+
+  `typeof`  |  `mode`     |  `storage.mode`
+:-----------|:------------|:----------------
+logical     |  logical    |  logical
+double      |  numeric    |  double
+integer     |  numeric    |  integer
+character   |  character  |  character
+complex     |  complex    |  complex
+raw         |  raw        |  raw
+
+---
+
+## Vector types
+
+**logical** - boolean values `TRUE` and `FALSE`
+
+```{r}
+typeof(TRUE)
+```
+
+**character** - character strings
+
+```{r}
+typeof("hello")
+typeof('world')
+```
+
+---
+
+**double** - floating point numerical values (default numerical type)
+
+```{r}
+typeof(1.33)
+typeof(7)
+```
+
+**integer** - integer numerical values (indicated with an `L`)
+
+```{r}
+typeof( 7L )
+typeof( 1:3 )
+```
+
+---
+
+## Concatenation
+
+Atomic vectors can be constructed using the concatenate, `c()`, function, *note* that vectors are always flat.
+
+```{r}
+c(1,2,3)
+c("Hello", "World!")
+c(1,c(2, c(3)))
+```
+
+---
+class: split-thirds
+
+## Testing types
+
+* `typeof(x)` - returns a character vector (length 1) of the *type* of object `x`.
+
+* `mode(x)` - returns a character vector (length 1) of the *mode* of object `x`.
+
+* `storage.mode(x)` - returns a character vector (length 1) of the *mode* of object `x`.
+
+.column[
+```{r}
+typeof(1)
+typeof(1L)
+typeof("A")
+typeof(TRUE)
+```
+]
+
+.column[
+```{r}
+mode(1)
+mode(1L)
+mode("A")
+mode(TRUE)
+```
+]
+
+.column[
+```{r}
+storage.mode(1)
+storage.mode(1L)
+storage.mode("A")
+storage.mode(TRUE)
+```
+]
+
+
+---
+class: split-thirds
+
+## Logical Predicates
+
+* `is.logical(x)` - returns `TRUE` if `x` has *type* logical.
+
+* `is.character(x)` - returns `TRUE` if `x` has *type* character.
+
+* `is.double(x)` - returns `TRUE` if `x` has *type* double.
+
+* `is.integer(x)` - returns `TRUE` if `x` has *type* integer.
+
+* `is.numeric(x)` - returns `TRUE` if `x` has *mode* numeric.
+
+.column[
+```{r}
+is.integer(1)
+is.integer(1L)
+is.integer(3:7)
+```
+]
+
+.column[
+```{r}
+is.double(1)
+is.double(1L)
+is.double(3:8)
+```
+]
+
+.column[
+```{r}
+is.numeric(1)
+is.numeric(1L)
+is.numeric(3:7)
+```
+]
+
+
+---
+
+## Other useful predicates
+
+* `is.atomic(x)` - returns `TRUE` if `x` is an *atomic vector*.
+
+* `is.vector(x)` - returns `TRUE` if `x` is either type of vector (i.e. either *atomic vector* or *list*).
+
+<br/>
+
+```{r}
+is.atomic(c(1,2,3))
+is.vector(c(1,2,3))
+is.atomic(list(1,2,3))
+is.vector(list(1,2,3))
+```
+
+
+---
+
+## Type Coercion
+
+R is a dynamically typed language -- it will automatically convert between most type without raising warnings or errors.
+
+```{r}
+c(1,"Hello")
+c(FALSE, 3L)
+c(1.2, 3L)
+```
+
+---
+
+## Operator coercion
+
+Functions and operators will attempt to coerce object to an appropriate type
+
+```{r}
+3.1+1L
+log(TRUE)
+TRUE & 7
+FALSE | !5
+```
+
+
+---
+class: split-50
+
+## Explicit Coercion
+
+Most of the `is` functions we just saw have an `as` variant which can be used for *explicit* coercion.
+
+.column[
+```{r}
+as.logical(5.2)
+as.character(TRUE)
+as.integer(pi)
+```
+]
+
+.column[
+```{r}
+as.numeric(FALSE)
+as.double("7.2")
+as.double("one")
+```
+]
+
+
+---
+
+## Missing Values
+
+R uses `NA` to represent missing values in its data structures, what may not be obvious is that there are different `NA`s for the different types.
+
+```{r}
+typeof(NA)
+typeof(NA+1)
+typeof(NA+1L)
+```
+
+
+---
+class: split-50
+
+## Contagiousness of Missing Values
+
+Because `NA`s represent missing values it makes sense that any calculation using them should also be missing.
+
+.column[
+```{r}
+1 + NA
+1 / NA
+NA * 5
+```
+]
+
+.column[
+```{r}
+mean(c(1,2,3,NA))
+sqrt(NA)
+3^NA
+```
+]
+
+---
+
+## Conditionals and missing values
+
+`NA`s can be problematic in some cases (particularly for control flow)
+
+```{r error=TRUE}
+1 == NA
+
+if (2 != NA)
+  "Here"
+
+if (any(c(1,2,NA,4) > 2))
+  "There"
+```
+
+
+---
+class: split-50
+
+## Testing for `NA`
+
+To explicitly test if a value is missing it is necessary to use `is.na` (often along with `any` or `all`).
+
+.column[
+```{r}
+is.na(NA)
+is.na(1)
+is.na(c(1,2,3,NA))
+```
+]
+
+.column[
+```{r}
+any(is.na(c(1,2,3,NA)))
+all(is.na(c(1,2,3,NA)))
+```
+]
+
+
+---
+class:split-50
+
+## Other Special values
+
+* `NaN` - Not a number
+
+* `Inf` - Positive infinity
+
+* `-Inf` - Negative infinity
+
+
+
+.column[
+```{r}
+pi / 0
+0 / 0
+1/0 + 1/0
+```
+]
+
+.column[
+```{r}
+1/0 - 1/0
+NaN / NA
+NaN * NA
+```
+]
+
+
+---
+
+## Testing for `inf` and `NaN`
+
+`NaN` and `Inf` don't have the same testing issues that `NA` has, but there are still convenience functions for testing for 
+
+```{r}
+is.finite(-Inf)
+is.finite(1/0+1/0)
+is.nan(1/0-1/0)
+```
+
+
+---
+class: split-50
+
+## Coercion for infinity and NaN
+
+First remember that `Inf`, `-Inf`, and `NaN` have type double, however their coercion behavior is not the same as for other double values.
+
+```{r}
+as.integer(Inf)
+as.integer(NaN)
+```
+
+.column[
+```{r}
+as.logical(Inf)
+as.logical(NaN)
+```
+]
+
+.column[
+```{r}
+as.character(Inf)
+as.character(NaN)
+```
+]
+
+---
+
+## Exercise 1
+
+**Part 1**
+
+What is the type of the following vectors? Explain why they have that type.
+
+* `c(1, NA+1L, "C")`
+* `c(1L / 0, NA)`
+* `c(1:3, 5)`
+* `c(3L, NaN+1L)`
+* `c(NA, TRUE)`
+
+
+**Part 2**
+
+Considering only the four (common) data types, what is R's implicit type conversion hierarchy (from highest priority to lowest priority)? 
+
+Hint - think about the pairwise interactions between types.
+
+---
+class: middle
+count: false
+
+# Generic Vectors
+
+
+---
+
+## Lists
+
+Lists are _generic vectors_, in that they are 1d and can contain any combination of R objects.
+
+```{r}
+list("A", c(TRUE,FALSE), (1:4)/2, function(x) x^2)
+```
+
+
+---
+
+## Structure
+
+Often we want a more compact representation of a complex object, the `str` function is useful for this particular task
+
+```{r}
+str( list("A", c(TRUE,FALSE), (1:4)/2, function(x) x^2) )
+```
+
+
+---
+
+## Recursive lists
+
+Lists can even contain other lists, meaning they don't have to be flat
+
+```{r}
+str( list(1, list(2, list(3, 4), 5)) )
+```
+
+
+---
+
+## List Coercion
+
+By default a vector will be coerced to a list (as a list is more generic) if needed
+
+```{r}
+str( c(1, 2, list(4, 5, list(6, 7))) )
+```
+
+--
+
+We can force a list into an atomic vector using `unlist`
+
+```{r}
+unlist(list(1:3, list(4:5, 6)))
+unlist( list(1, list(2, list(3, "Hello"))) )
+```
+
+
+---
+
+## Named lists
+
+Because of their more complex structure we often want to name the elements of a list (we can also do this with vectors). This can make reading and accessing the list more straight forward.
+
+```{r}
+str(list(A = 1, B = list(C = 2, D = 3)))
+list("knock knock" = "who's there?")
+names(list(ABC=1, DEF=list(H=2, I=3)))
+```
+
+
+---
+
+## Exercise 2
+
+Represent the following JSON data as a list in R.
+
+```json
+{
+  "firstName": "John",
+  "lastName": "Smith",
+  "age": 25,
+  "address": 
+  {
+    "streetAddress": "21 2nd Street",
+    "city": "New York",
+    "state": "NY",
+    "postalCode": 10021
+  },
+  "phoneNumber": 
+  [
+    {
+      "type": "home",
+      "number": "212 555-1239"
+    },
+    {
+      "type": "fax",
+      "number": "646 555-4567"
+    }
+  ]
+}
+```
+
+
+---
+
+# Acknowledgments
+## Acknowledgments
+
+Above materials are derived in part from the following sources:
+
+* Hadley Wickham - [Advanced R](http://adv-r.had.co.nz/)
+* [R Language Definition](http://stat.ethz.ch/R-manual/R-devel/doc/manual/R-lang.html)

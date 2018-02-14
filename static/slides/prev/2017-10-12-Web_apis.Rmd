@@ -1,0 +1,11 @@
+---
+layout: page
+title: Web Scraping (cont.)
+reading: ""
+notes: "<a href='hw/hw4.html'>HW 4</a> - due by <strike>11:59 on Wed 10/25</strike> Noon on Fri 10/27 <br/> Screencast - <a href='https://youtu.be/sxZIP98MPfE'>Scraping LQ</a>"
+output: 
+    ioslides_presentation:
+        widescreen: true
+slides: false
+link: false
+---

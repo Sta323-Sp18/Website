@@ -1,0 +1,11 @@
+---
+layout: page
+title: Midterm 1 Review
+reading: ""
+notes: ""
+output: 
+    ioslides_presentation:
+        widescreen: true
+slides: false
+link: false
+---

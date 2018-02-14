@@ -1,0 +1,12 @@
+---
+layout: page
+title: Data Visualization and Exploration (pt. 2)
+reading: ""
+notes: "<a href='https://sakai.duke.edu/access/content/group/322cd2bc-c36f-4da8-84d0-4ae3fe3e656c/Sta523-chart_improvement.pdf'>Presentations</a> <br/> HW 3 - due by 11:59 pm on Wed 10/11"
+output: 
+    ioslides_presentation:
+        widescreen: true
+slides: false
+link: false
+---
+

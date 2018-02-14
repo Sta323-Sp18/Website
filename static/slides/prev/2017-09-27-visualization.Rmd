@@ -1,0 +1,12 @@
+---
+layout: page
+title: Data Visualization and Exploration
+reading: ""
+notes: "Visualization Slides - <a href='https://sakai.duke.edu/access/content/group/322cd2bc-c36f-4da8-84d0-4ae3fe3e656c/STA112FS_VisDayOneSlides_Fall2017.pdf'>Day 1</a>"
+output: 
+    ioslides_presentation:
+        widescreen: true
+slides: false
+link: false
+---
+

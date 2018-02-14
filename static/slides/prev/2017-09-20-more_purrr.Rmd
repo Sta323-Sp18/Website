@@ -1,0 +1,12 @@
+---
+layout: page
+title: More purrr
+reading: "<a href='https://github.com/rstudio/cheatsheets/raw/master/source/pdfs/purrr-cheatsheet.pdf'>purrr cheatsheet</a>"
+notes: "Screencast - <a href='https://youtu.be/LxGyLRXJrvo'>purrr demo</a>"
+output: 
+    ioslides_presentation:
+        widescreen: true
+slides: false
+link: false
+---
+

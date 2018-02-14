@@ -1,0 +1,63 @@
+---
+layout: page
+title: Homework 2 - (Fake) Legos Sales
+---
+
+<br/>
+<div style="text-align:center">
+![](imgs/legos.jpg)
+</div>
+
+### Repo Creation
+
+To create your personal repo follow this [link](https://sakai.duke.edu/access/content/group/58fdbb5f-7858-4fdf-8715-38acf58b4376/https%3A__classroom.20180130121646.URL).
+
+### Data
+
+For this assignment you will be working with a synthetic data set of sales records for lego construction sets. 
+
+
+The code below will load a copy of a data frame, called `sales`, into your R environment.
+
+```{r eval=FALSE}
+sales = readRDS("lego_sales.rds")
+```
+
+The data is structured as a tidy data frame. Tidy in this case means each row represents a separate purchase of a lego set by an individual and the columns correspond to attributes of the purchaser and the set that was purchased. Note that the unit of observation for this data is the purchase of one or more copies of a specific set by a specific purchaser.
+
+## Tasks
+
+Your task is to answer the following questions using dplyr to manipulatie and summarize the sales data. Only a one or two sentence write up is needed for each questions so long as you also include reasonably clear / well documented code. For this task you are not allowed to use any non-base R packages other than dplyr and its dependencies. Make sure that your code outputs your answer and only your answer. 
+
+<br/>
+
+1. What was the most common first name of purchasers? Last name?
+
+1. What are the five most popular lego sets based on these data?
+
+1. Which five customers have spent the most money so far and how much have they spent?
+
+1. Which lego theme has made the most money for lego?
+
+1. Do men or women buy more lego sets (per person) on average?
+
+1. What are the seven most popular hobbies of lego purchasers?
+
+1. How many total pieces have been purchased from lego by these customers?
+
+1. What area code has the highest average age?
+
+
+<br/>
+
+## Submission and Grading
+
+This homework is due by *11:59 pm Tuesday, February 6th*. You are to complete the assignment as an individual and to keep everything (code, write ups, etc.) on your github repository (commit early and often).
+
+The final product for this assignment should be a single Rmd document (a template of which is provided) that contains all code and text for the tasks described above. This document should be clearly and cleanly formated and present all of your results. Style and formating does count for this assignment, so please take the time to make sure everything looks good and your text and code are properly formated. This document must be reproducible and I must be able to compile it with minimal intervention - documents that do not compile will be given a 0. 
+
+We will again be using Wercker to test all of your code submissions. Everytime you push to github, Wercker will attempt to compile your Rmd file and report back on its status. If Wercker is reporting that the build passes then your Rmd document can be cleanly compiled.
+
+<br/>
+
+

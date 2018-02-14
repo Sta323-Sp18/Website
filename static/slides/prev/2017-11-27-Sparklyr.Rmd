@@ -1,0 +1,9 @@
+---
+layout: page
+title: SparklyR
+reading: "SparklyR - <a href='http://spark.rstudio.com/'>Docs and Examples</a> <br/> <a href='http://spark.apache.org/docs/latest/sparkr.html'>SparkR</a>, <a href='http://spark.apache.org/docs/latest/api/R/index.html'>SparkR API</a>"
+notes: "Screencast - <a href='https://youtu.be/_AhGZmb_3lk'>Sparklyr Demo</a>"
+slides: false
+link: false
+---
+

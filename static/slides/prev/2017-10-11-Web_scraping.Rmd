@@ -1,0 +1,100 @@
+---
+layout: page
+title: Web Scraping
+reading: "<a href='https://cran.r-project.org/web/packages/rvest/vignettes/selectorgadget.html'>rvest and Selectorgadget</a>"
+notes: "Screencast - <a href='https://www.youtube.com/watch?v=iTZsVYPDE04'>rvest demo</a>"
+output: 
+    ioslides_presentation:
+        widescreen: true
+slides: true
+link: true
+---
+
+```{r echo=FALSE}
+library(magrittr)
+```
+
+# Web Scraping with rvest
+
+## Hypertext Markup Language
+
+Most of the data on the web is still largely available as HTML - while it is structured (hierarchical / tree based) it often is not available in a form useful for analysis (flat / tidy).
+
+```html
+<html>
+  <head>
+    <title>This is a title</title>
+  </head>
+  <body>
+    <p align="center">Hello world!</p>
+  </body>
+</html>
+```
+
+## rvest {.smaller}
+
+`rvest` is a package from Hadley Wickham that makes basic processing and manipulation of HTML data straight forward.
+
+<br/>
+
+Core functions:
+
+* `read_html` - read HTML data from a url or character string.
+
+* `html_nodes` - select specified nodes from the HTML document usign CSS selectors.
+
+* `html_table` - parse an HTML table into a data frame.
+
+* `html_text` - extract tag pairs' content.
+
+* `html_name` - extract tags' names.
+
+* `html_attrs` - extract all of each tag's attributes.
+
+* `html_attr` - extract tags' attribute value by name.
+
+
+## css selectors {.smaller}
+
+We will be using a tool called selector gadget to help up identify the html elements of interest - it does this by constructing a css selector which can be used to subset the html document.
+
+<br/>
+
+Selector            Example               Description
+------------      ------------------      --------------------------------------------------
+element             `p`                   Select all &lt;p&gt; elements
+element element     `div p`               Select all &lt;p&gt; elements inside a &lt;div&gt; element
+element>element     `div > p`             Select all &lt;p&gt; elements with &lt;div&gt; as a parent
+.class              `.title`              Select all elements with class="title"
+#id                 `#name`               Select all elements with id="name"
+[attribute]         `[class]`             Select all elements with a class attribute
+[attribute=value]   `[class=title]`       Select all elements with class="title"
+
+## SelectorGadget {.smaller}
+
+This is a javascript based tool that helps you interactively build an appropriate CSS selector for the content you are interested in.
+
+
+
+<center>
+<img src='imgs/selectorgadget.png' width=500> <br/>
+<a href='http://selectorgadget.com/'>http://selectorgadget.com/</a>
+</center>
+
+## Live Demo
+
+
+
+
+## Exercise {.smaller}
+
+### Step 1
+
+For the movies listed in the **Top Box Office** list on `rottentomatoes.com` create a data frame with the Movies' titles, their weekend gross, their tomatometer score, and whether the movie is fresh or rotten.
+
+<br/>
+
+
+### Step 2
+
+Using the url for each movie, now go out and grab the average rating, number of reviews, number of fresh and rotten reviews as well as the audience score, average audience rating and number of user ratings.

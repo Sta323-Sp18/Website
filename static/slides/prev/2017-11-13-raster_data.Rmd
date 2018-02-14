@@ -1,0 +1,13 @@
+---
+layout: page
+title: Modeling Precinct Boundaries (Pt 1)
+reading: ""
+notes: "Screencast - <a href='https://youtu.be/IBXXWJ1TKRU'>Part 1</a>"
+output: 
+    ioslides_presentation:
+        widescreen: true
+        smaller: true
+slides: false
+link: false
+---
+

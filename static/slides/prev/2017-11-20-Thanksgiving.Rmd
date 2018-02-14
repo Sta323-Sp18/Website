@@ -1,0 +1,9 @@
+---
+layout: page
+title: <i>No class - Thanksgiving</i>
+reading: ""
+notes: "Midterm 2 out - due 12/1 by 11:59 pm"
+slides: false
+link: false
+---
+

@@ -1,0 +1,8 @@
+---
+layout: page
+title: Reactive Data
+reading: ""
+notes: "<a href='hw/hw5.html'>HW 5</a> - due by 11:59 pm on Monday 11/06 <br/> Screencast - <a href='https://youtu.be/ycI9jAwT858'>Reactivity</a>"
+slides: false
+link: false
+---

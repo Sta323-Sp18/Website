@@ -1,0 +1,9 @@
+---
+layout: page
+title: SparklyR & text data
+reading: "MLlib - <a href='https://spark.apache.org/docs/2.2.0/ml-features.html'>Feature Transformers</a> <br/> SparklyR - <a href='https://rdrr.io/github/rstudio/sparklyr/f/vignettes/guides-textmining.Rmd'>Textmining vignette</a>"
+notes: "Screencast - <a href=''>JSON Example</a>"
+slides: false
+link: false
+---
+

@@ -4,6 +4,7 @@ schedule:
 - week: 0
   day: 0
   lecture: "Introduction"
+  slides: Lec00
   readings: 
   - text: Codeschool - Try R
     link: https://www.codeschool.com/courses/try-r
@@ -11,66 +12,99 @@ schedule:
 
 - week: 1
   day: 0
-  lecture: "Using git and github"
-  readings:
-  - text: Happy Git and GitHub
-    link: http://happygitwithr.com/
-  - text: Try GitHub
-    link: https://try.github.io/
-  notes: ""
-
-- week: 1
-  day: 2
-  lecture: "Using the shell"
-  readings:
-  - text: Learn the command line
-    link: https://www.codecademy.com/en/courses/learn-the-command-line
-  notes: ""
-
-- week: 2
-  day: 0
   lecture: "Logic in R"
+  slides: Lec01
   readings:
   - text: Google's R style guide
     link: https://google-styleguide.googlecode.com/svn/trunk/Rguide.xml
   - text: Hadley's R style guide
     link: http://r-pkgs.had.co.nz/style.html
+  notes: "<a href='https://vm-manage.oit.duke.edu/containers/rstudio'>RStudio OIT VM</a>"
+
+- week: 1
+  day: 2
+  lecture: "<i>Class canceled - snow day</i>"
+
+- week: 1
+  day: 3
+  lecture: "Using git and github"
+  slides: Lec02
+  readings:
+  - text: Happy Git and GitHub
+    link: http://happygitwithr.com/
+  - text: Try GitHub
+    link: https://try.github.io/
+  notes: "<a href='homework/hw1.html'>HW1</a> - due Mon, Jan 29th by 11:59 pm"
+  screencast: https://youtu.be/3uePrJ5ByfI
+
+- week: 2
+  day: 0
+  lecture: "Vectors & Types"
+  slides: Lec03
+  readings: 
+  - text: Adv-R - Data Structures
+    link: http://adv-r.had.co.nz/Data-structures.html
   notes: ""
+
 
 - week: 2
   day: 2
-  lecture: "R data structures"
-  readings: ""
+  lecture: "Data Structures & Subsetting"
+  slides: Lec04
+  readings:
+  - text: Adv-R - Subsetting
+    link: http://adv-r.had.co.nz/Subsetting.html
   notes: ""
 
 - week: 3
   day: 0
-  lecture: "Subsetting"
-  readings: ""
-  notes: ""
+  lecture: "dplyr"
+  slides: Lec05
+  readings:
+  - text: dplyr Vignette
+    link: https://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html
+  - text: Data transformation cheatsheet
+    link: https://github.com/rstudio/cheatsheets/raw/master/data-transformation.pdf
+  notes: "<a href='homework/hw2.html'>HW2</a> - due Tue, Feb 6th by 11:59 pm <br/> RStudio Server: <a href='https://gort.stat.duke.edu:8787'>gort</a>"
 
 - week: 3
   day: 2
-  lecture: "dplyr"
-  readings: ""
-  notes: ""
+  lecture: "<i>No class</i>"
 
 - week: 4
   day: 0
-  lecture: "Functional programming"
-  readings: ""
-  notes: ""
+  lecture: "tidyr & purrr"
+  slides: Lec06_tidyr
+  readings:
+  - text: tidy data Vignette
+    link: https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html
+  - text: R4DS - tidy data
+    link: http://r4ds.had.co.nz/tidy-data.html
+  - text: Purrr tutorial
+    link: https://jennybc.github.io/purrr-tutorial/index.html
+  notes: "HW3 - due Tue, Feb 20th by 11:59 pm"
 
 - week: 4
   day: 2
   lecture: "More purrr"
-  readings: ""
+  screencast: https://youtu.be/pekrHwJOAwo
+  slides: Lec07_purrr
+  readings:
+  - text: R4DS - Iteration
+    link: http://r4ds.had.co.nz/iteration.html
+  - text: purrr cheatsheet
+    link: https://github.com/rstudio/cheatsheets/raw/master/purrr.pdf
   notes: ""
 
 - week: 5
   day: 0
   lecture: "ggplot2"
-  readings: ""
+  slides: Lec08_ggplot2
+  readings:
+  - text:  R4DS - Visualization
+    link: http://r4ds.had.co.nz/data-visualisation.html
+  - text: ggplot2 Reference
+    link: http://ggplot2.tidyverse.org/reference/index.html
   notes: ""
 
 - week: 5

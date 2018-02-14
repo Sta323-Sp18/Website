@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>R data structures</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Colin Rundel" />
+    <meta name="date" content="2018-01-23" />
+    <link href="libs/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# R data structures
+### Colin Rundel
+### 2018-01-23
+
+---
+
+exclude: true
+
+
+
+---
+class: middle
+count: false
+
+# From last week
+
+
+---
+
+## Exercise 2
+
+Below is the list of primes between 2 and 100:
+```
+2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 
+43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97
+```
+
+If you were given the vector `x = c(3, 4, 12, 19, 23, 48, 50, 61, 63, 78)`, write out the R code necessary to print only the values of `x` that are *not* prime (without using subsetting or the `%in%` operator). 
+
+Your code should use *nested* loops to iterate through the vector of primes and `x`.
+
+---
+class: middle
+count: false
+
+# Overview
+
+---
+
+## Data structures and dimensionality
+
+.middle[
+
+  Dimensions  |  Homogeneous  | Heterogeneous
+--------------|:--------------|:----------------------
+  1*d*        | Atomic Vector | List (Generic Vector)
+  2*d*        |     Matrix    | Data Frame
+  n*d*        |     Array     | `NA`
+
+]
+
+---
+class: middle
+count: false
+
+# Atomic Vectors
+
+---
+
+## Atomic Vectors
+
+R has six atomic vector types: 
+
+  `typeof`  |  `mode`     |  `storage.mode`
+:-----------|:------------|:----------------
+logical     |  logical    |  logical
+double      |  numeric    |  double
+integer     |  numeric    |  integer
+character   |  character  |  character
+complex     |  complex    |  complex
+raw         |  raw        |  raw
+
+---
+
+## Vector types
+
+**logical** - boolean values `TRUE` and `FALSE`
+
+
+```r
+typeof(TRUE)
+```
+
+```
+## [1] "logical"
+```
+
+**character** - character strings
+
+
+```r
+typeof("hello")
+```
+
+```
+## [1] "character"
+```
+
+```r
+typeof('world')
+```
+
+```
+## [1] "character"
+```
+
+---
+
+**double** - floating point numerical values (default numerical type)
+
+
+```r
+typeof(1.33)
+```
+
+```
+## [1] "double"
+```
+
+```r
+typeof(7)
+```
+
+```
+## [1] "double"
+```
+
+**integer** - integer numerical values (indicated with an `L`)
+
+
+```r
+typeof( 7L )
+```
+
+```
+## [1] "integer"
+```
+
+```r
+typeof( 1:3 )
+```
+
+```
+## [1] "integer"
+```
+
+---
+
+## Concatenation
+
+Atomic vectors can be constructed using the concatenate, `c()`, function, *note* that vectors are always flat.
+
+
+```r
+c(1,2,3)
+```
+
+```
+## [1] 1 2 3
+```
+
+```r
+c("Hello", "World!")
+```
+
+```
+## [1] "Hello"  "World!"
+```
+
+```r
+c(1,c(2, c(3)))
+```
+
+```
+## [1] 1 2 3
+```
+
+---
+class: split-thirds
+
+## Testing types
+
+* `typeof(x)` - returns a character vector (length 1) of the *type* of object `x`.
+
+* `mode(x)` - returns a character vector (length 1) of the *mode* of object `x`.
+
+* `storage.mode(x)` - returns a character vector (length 1) of the *mode* of object `x`.
+
+.column[
+
+```r
+typeof(1)
+```
+
+```
+## [1] "double"
+```
+
+```r
+typeof(1L)
+```
+
+```
+## [1] "integer"
+```
+
+```r
+typeof("A")
+```
+
+```
+## [1] "character"
+```
+
+```r
+typeof(TRUE)
+```
+
+```
+## [1] "logical"
+```
+]
+
+.column[
+
+```r
+mode(1)
+```
+
+```
+## [1] "numeric"
+```
+
+```r
+mode(1L)
+```
+
+```
+## [1] "numeric"
+```
+
+```r
+mode("A")
+```
+
+```
+## [1] "character"
+```
+
+```r
+mode(TRUE)
+```
+
+```
+## [1] "logical"
+```
+]
+
+.column[
+
+```r
+storage.mode(1)
+```
+
+```
+## [1] "double"
+```
+
+```r
+storage.mode(1L)
+```
+
+```
+## [1] "integer"
+```
+
+```r
+storage.mode("A")
+```
+
+```
+## [1] "character"
+```
+
+```r
+storage.mode(TRUE)
+```
+
+```
+## [1] "logical"
+```
+]
+
+
+---
+class: split-thirds
+
+## Logical Predicates
+
+* `is.logical(x)` - returns `TRUE` if `x` has *type* logical.
+
+* `is.character(x)` - returns `TRUE` if `x` has *type* character.
+
+* `is.double(x)` - returns `TRUE` if `x` has *type* double.
+
+* `is.integer(x)` - returns `TRUE` if `x` has *type* integer.
+
+* `is.numeric(x)` - returns `TRUE` if `x` has *mode* numeric.
+
+.column[
+
+```r
+is.integer(1)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.integer(1L)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.integer(3:7)
+```
+
+```
+## [1] TRUE
+```
+]
+
+.column[
+
+```r
+is.double(1)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.double(1L)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.double(3:8)
+```
+
+```
+## [1] FALSE
+```
+]
+
+.column[
+
+```r
+is.numeric(1)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.numeric(1L)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.numeric(3:7)
+```
+
+```
+## [1] TRUE
+```
+]
+
+
+---
+
+## Other useful predicates
+
+* `is.atomic(x)` - returns `TRUE` if `x` is an *atomic vector*.
+
+* `is.vector(x)` - returns `TRUE` if `x` is either type of vector (i.e. either *atomic vector* or *list*).
+
+&lt;br/&gt;
+
+
+```r
+is.atomic(c(1,2,3))
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.vector(c(1,2,3))
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.atomic(list(1,2,3))
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.vector(list(1,2,3))
+```
+
+```
+## [1] TRUE
+```
+
+
+---
+
+## Type Coercion
+
+R is a dynamically typed language -- it will automatically convert between most type without raising warnings or errors.
+
+
+```r
+c(1,"Hello")
+```
+
+```
+## [1] "1"     "Hello"
+```
+
+```r
+c(FALSE, 3L)
+```
+
+```
+## [1] 0 3
+```
+
+```r
+c(1.2, 3L)
+```
+
+```
+## [1] 1.2 3.0
+```
+
+---
+
+## Operator coercion
+
+Functions and operators will attempt to coerce object to an appropriate type
+
+
+```r
+3.1+1L
+```
+
+```
+## [1] 4.1
+```
+
+```r
+log(TRUE)
+```
+
+```
+## [1] 0
+```
+
+```r
+TRUE &amp; 7
+```
+
+```
+## [1] TRUE
+```
+
+```r
+FALSE | !5
+```
+
+```
+## [1] FALSE
+```
+
+
+---
+class: split-50
+
+## Explicit Coercion
+
+Most of the `is` functions we just saw have an `as` variant which can be used for *explicit* coercion.
+
+.column[
+
+```r
+as.logical(5.2)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+as.character(TRUE)
+```
+
+```
+## [1] "TRUE"
+```
+
+```r
+as.integer(pi)
+```
+
+```
+## [1] 3
+```
+]
+
+.column[
+
+```r
+as.numeric(FALSE)
+```
+
+```
+## [1] 0
+```
+
+```r
+as.double("7.2")
+```
+
+```
+## [1] 7.2
+```
+
+```r
+as.double("one")
+```
+
+```
+## Warning: NAs introduced by coercion
+```
+
+```
+## [1] NA
+```
+]
+
+
+---
+
+## Missing Values
+
+R uses `NA` to represent missing values in its data structures, what may not be obvious is that there are different `NA`s for the different types.
+
+
+```r
+typeof(NA)
+```
+
+```
+## [1] "logical"
+```
+
+```r
+typeof(NA+1)
+```
+
+```
+## [1] "double"
+```
+
+```r
+typeof(NA+1L)
+```
+
+```
+## [1] "integer"
+```
+
+
+---
+class: split-50
+
+## Contagiousness of Missing Values
+
+Because `NA`s represent missing values it makes sense that any calculation using them should also be missing.
+
+.column[
+
+```r
+1 + NA
+```
+
+```
+## [1] NA
+```
+
+```r
+1 / NA
+```
+
+```
+## [1] NA
+```
+
+```r
+NA * 5
+```
+
+```
+## [1] NA
+```
+]
+
+.column[
+
+```r
+mean(c(1,2,3,NA))
+```
+
+```
+## [1] NA
+```
+
+```r
+sqrt(NA)
+```
+
+```
+## [1] NA
+```
+
+```r
+3^NA
+```
+
+```
+## [1] NA
+```
+]
+
+---
+
+## Conditionals and missing values
+
+`NA`s can be problematic in some cases (particularly for control flow)
+
+
+```r
+1 == NA
+```
+
+```
+## [1] NA
+```
+
+```r
+if (2 != NA)
+  "Here"
+```
+
+```
+## Error in if (2 != NA) "Here": missing value where TRUE/FALSE needed
+```
+
+```r
+if (any(c(1,2,NA,4) &gt; 2))
+  "There"
+```
+
+```
+## [1] "There"
+```
+
+
+---
+class: split-50
+
+## Testing for `NA`
+
+To explicitly test if a value is missing it is necessary to use `is.na` (often along with `any` or `all`).
+
+.column[
+
+```r
+is.na(NA)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.na(1)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.na(c(1,2,3,NA))
+```
+
+```
+## [1] FALSE FALSE FALSE  TRUE
+```
+]
+
+.column[
+
+```r
+any(is.na(c(1,2,3,NA)))
+```
+
+```
+## [1] TRUE
+```
+
+```r
+all(is.na(c(1,2,3,NA)))
+```
+
+```
+## [1] FALSE
+```
+]
+
+
+---
+class:split-50
+
+## Other Special values
+
+* `NaN` - Not a number
+
+* `Inf` - Positive infinity
+
+* `-Inf` - Negative infinity
+
+
+
+.column[
+
+```r
+pi / 0
+```
+
+```
+## [1] Inf
+```
+
+```r
+0 / 0
+```
+
+```
+## [1] NaN
+```
+
+```r
+1/0 + 1/0
+```
+
+```
+## [1] Inf
+```
+]
+
+.column[
+
+```r
+1/0 - 1/0
+```
+
+```
+## [1] NaN
+```
+
+```r
+NaN / NA
+```
+
+```
+## [1] NaN
+```
+
+```r
+NaN * NA
+```
+
+```
+## [1] NaN
+```
+]
+
+
+---
+
+## Testing for `inf` and `NaN`
+
+`NaN` and `Inf` don't have the same testing issues that `NA` has, but there are still convenience functions for testing for 
+
+
+```r
+is.finite(-Inf)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.finite(1/0+1/0)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+is.nan(1/0-1/0)
+```
+
+```
+## [1] TRUE
+```
+
+
+---
+class: split-50
+
+## Coercion for infinity and NaN
+
+First remember that `Inf`, `-Inf`, and `NaN` have type double, however their coercion behavior is not the same as for other double values.
+
+
+```r
+as.integer(Inf)
+```
+
+```
+## Warning: NAs introduced by coercion to integer range
+```
+
+```
+## [1] NA
+```
+
+```r
+as.integer(NaN)
+```
+
+```
+## [1] NA
+```
+
+.column[
+
+```r
+as.logical(Inf)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+as.logical(NaN)
+```
+
+```
+## [1] NA
+```
+]
+
+.column[
+
+```r
+as.character(Inf)
+```
+
+```
+## [1] "Inf"
+```
+
+```r
+as.character(NaN)
+```
+
+```
+## [1] "NaN"
+```
+]
+
+---
+
+## Exercise 1
+
+**Part 1**
+
+What is the type of the following vectors? Explain why they have that type.
+
+* `c(1, NA+1L, "C")`
+* `c(1L / 0, NA)`
+* `c(1:3, 5)`
+* `c(3L, NaN+1L)`
+* `c(NA, TRUE)`
+
+
+**Part 2**
+
+Considering only the four (common) data types, what is R's implicit type conversion hierarchy (from highest priority to lowest priority)? 
+
+Hint - think about the pairwise interactions between types.
+
+---
+class: middle
+count: false
+
+# Generic Vectors
+
+
+---
+
+## Lists
+
+Lists are _generic vectors_, in that they are 1d and can contain any combination of R objects.
+
+
+```r
+list("A", c(TRUE,FALSE), (1:4)/2, function(x) x^2)
+```
+
+```
+## [[1]]
+## [1] "A"
+## 
+## [[2]]
+## [1]  TRUE FALSE
+## 
+## [[3]]
+## [1] 0.5 1.0 1.5 2.0
+## 
+## [[4]]
+## function (x) 
+## x^2
+```
+
+
+---
+
+## Structure
+
+Often we want a more compact representation of a complex object, the `str` function is useful for this particular task
+
+
+```r
+str( list("A", c(TRUE,FALSE), (1:4)/2, function(x) x^2) )
+```
+
+```
+## List of 4
+##  $ : chr "A"
+##  $ : logi [1:2] TRUE FALSE
+##  $ : num [1:4] 0.5 1 1.5 2
+##  $ :function (x)  
+##   ..- attr(*, "srcref")=Class 'srcref'  atomic [1:8] 1 40 1 54 40 54 1 1
+##   .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x7fe080dbc6b0&gt;
+```
+
+
+---
+
+## Recursive lists
+
+Lists can even contain other lists, meaning they don't have to be flat
+
+
+```r
+str( list(1, list(2, list(3, 4), 5)) )
+```
+
+```
+## List of 2
+##  $ : num 1
+##  $ :List of 3
+##   ..$ : num 2
+##   ..$ :List of 2
+##   .. ..$ : num 3
+##   .. ..$ : num 4
+##   ..$ : num 5
+```
+
+
+---
+
+## List Coercion
+
+By default a vector will be coerced to a list (as a list is more generic) if needed
+
+
+```r
+str( c(1, 2, list(4, 5, list(6, 7))) )
+```
+
+```
+## List of 5
+##  $ : num 1
+##  $ : num 2
+##  $ : num 4
+##  $ : num 5
+##  $ :List of 2
+##   ..$ : num 6
+##   ..$ : num 7
+```
+
+--
+
+We can force a list into an atomic vector using `unlist`
+
+
+```r
+unlist(list(1:3, list(4:5, 6)))
+```
+
+```
+## [1] 1 2 3 4 5 6
+```
+
+```r
+unlist( list(1, list(2, list(3, "Hello"))) )
+```
+
+```
+## [1] "1"     "2"     "3"     "Hello"
+```
+
+
+---
+
+## Named lists
+
+Because of their more complex structure we often want to name the elements of a list (we can also do this with vectors). This can make reading and accessing the list more straight forward.
+
+
+```r
+str(list(A = 1, B = list(C = 2, D = 3)))
+```
+
+```
+## List of 2
+##  $ A: num 1
+##  $ B:List of 2
+##   ..$ C: num 2
+##   ..$ D: num 3
+```
+
+```r
+list("knock knock" = "who's there?")
+```
+
+```
+## $`knock knock`
+## [1] "who's there?"
+```
+
+```r
+names(list(ABC=1, DEF=list(H=2, I=3)))
+```
+
+```
+## [1] "ABC" "DEF"
+```
+
+
+---
+
+## Exercise 2
+
+Represent the following JSON data as a list in R.
+
+```json
+{
+  "firstName": "John",
+  "lastName": "Smith",
+  "age": 25,
+  "address": 
+  {
+    "streetAddress": "21 2nd Street",
+    "city": "New York",
+    "state": "NY",
+    "postalCode": 10021
+  },
+  "phoneNumber": 
+  [
+    {
+      "type": "home",
+      "number": "212 555-1239"
+    },
+    {
+      "type": "fax",
+      "number": "646 555-4567"
+    }
+  ]
+}
+```
+
+
+---
+
+# Acknowledgments
+## Acknowledgments
+
+Above materials are derived in part from the following sources:
+
+* Hadley Wickham - [Advanced R](http://adv-r.had.co.nz/)
+* [R Language Definition](http://stat.ethz.ch/R-manual/R-devel/doc/manual/R-lang.html)
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {window.dispatchEvent(new Event('resize'));});
+(function() {var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler"); if (!r) return; s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }"; d.head.appendChild(s);})();</script>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+  }
+});
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

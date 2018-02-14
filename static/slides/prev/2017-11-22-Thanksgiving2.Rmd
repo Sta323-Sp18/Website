@@ -1,0 +1,9 @@
+---
+layout: page
+title: <i>No class - Thanksgiving</i>
+reading: ""
+notes: ""
+slides: false
+link: false
+---
+
