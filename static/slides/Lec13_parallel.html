@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Parallelization</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Colin Rundel" />
+    <meta name="date" content="2018-03-06" />
+    <link href="libs/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Parallelization
+### Colin Rundel
+### 2018-03-06
+
+---
+
+exclude: true
+
+
+
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```
+## Loading required package: iterators
+```
+
+---
+class: middle
+count: false
+
+# Parallelization
+
+---
+
+## `parallel`
+
+Part of the base packages in R 
+
+* tools for the forking of R processes (some functions do not work on Windows)
+
+* Core functions:
+    
+    * `detectCores`
+
+    * `pvec`
+
+    * `mclapply`
+
+    * `mcparallel` &amp; `mccollect`
+
+
+---
+
+## `detectCores`
+
+Surprisingly, detects the number of cores of the current system.
+
+
+```r
+detectCores()
+
+## [1] 24
+```
+
+---
+
+## pvec
+
+Parallelization of a vectorized function call
+
+
+```r
+system.time(pvec(1:1e7, sqrt, mc.cores = 1))
+
+##   user  system elapsed 
+##  0.214   0.029   0.243 
+
+system.time(pvec(1:1e7, sqrt, mc.cores = 4))
+
+##   user  system elapsed 
+##  0.442   0.185   0.631 
+
+system.time(pvec(1:1e7, sqrt, mc.cores = 8))
+
+##   user  system elapsed 
+##  0.532   0.389   0.372 
+```
+
+---
+
+
+```r
+cores = c(1,2,4,8,16)
+order = 6:8
+res = map(
+  cores, 
+  function(x) {
+     map_dbl(order, function(y) system.time(pvec(1:(10^y), sqrt, mc.cores=x))[3]) 
+  }
+) %&gt;% do.call(rbind,.)
+
+rownames(res) = paste0(cores," cores")
+colnames(res) = paste0("10^",order)
+
+res
+
+##            10^6  10^7  10^8
+##  1 cores  0.016 0.282 1.489
+##  2 cores  0.070 0.526 5.198
+##  4 cores  0.052 0.430 5.023
+##  8 cores  0.054 0.376 4.098
+##  16 cores 0.073 0.401 4.049
+```
+
+---
+
+## mclapply
+
+Parallelized version of `lapply`
+
+
+```r
+system.time(rnorm(1e6))
+
+##   user  system elapsed 
+##  0.101   0.007   0.107 
+
+system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 2)))
+
+##   user  system elapsed 
+##  0.148   0.136   0.106 
+
+system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 4)))
+
+##   user  system elapsed 
+##  0.242   0.061   0.052
+```
+
+---
+
+
+```r
+system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 4)))
+
+##   user  system elapsed 
+##  0.097   0.047   0.079 
+
+system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 8)))
+
+##   user  system elapsed 
+##  0.193   0.076   0.040 
+
+system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 10)))
+
+##   user  system elapsed 
+##  0.162   0.083   0.041 
+
+system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 12)))
+
+##   user  system elapsed 
+##  0.098   0.065   0.037 
+```
+
+
+---
+
+## mcparallel
+
+Asynchronously evaluation of an R expression in a separate process
+
+
+```r
+m = mcparallel(rnorm(1e6))
+n = mcparallel(rbeta(1e6,1,1))
+o = mcparallel(rgamma(1e6,1,1))
+
+str(m)
+```
+
+```
+## List of 2
+##  $ pid: int 13499
+##  $ fd : int [1:2] 4 7
+##  - attr(*, "class")= chr [1:3] "parallelJob" "childProcess" "process"
+```
+
+```r
+str(n)
+```
+
+```
+## List of 2
+##  $ pid: int 13500
+##  $ fd : int [1:2] 5 9
+##  - attr(*, "class")= chr [1:3] "parallelJob" "childProcess" "process"
+```
+
+
+---
+
+## mccollect
+
+Checks `mcparallel` objects for completion
+
+
+```r
+str(mccollect(list(m,n,o)))
+```
+
+```
+## List of 3
+##  $ 13499: num [1:1000000] -0.0319 0.9343 -0.5404 -0.4203 -1.3391 ...
+##  $ 13500: num [1:1000000] 0.959 0.778 0.792 0.616 0.447 ...
+##  $ 13501: num [1:1000000] 0.411 0.188 0.407 1 1.43 ...
+```
+
+---
+
+## mccollect - waiting
+
+
+```r
+p = mcparallel(mean(rnorm(1e5)))
+mccollect(p, wait = FALSE, 10) # will retrieve the result (since it's fast)
+```
+
+```
+## $`13502`
+## [1] 0.0008238381
+```
+
+```r
+mccollect(p, wait = FALSE)     # will signal the job as terminating
+```
+
+```
+## $`13502`
+## NULL
+```
+
+```r
+mccollect(p, wait = FALSE)     # there is no longer such a job
+```
+
+```
+## NULL
+```
+
+
+---
+class: middle
+count: false
+
+# doMC &amp; foreach
+
+---
+
+## doMC &amp; foreach
+
+Packages by Revolution Analytics that provides the `foreach` function which is a parallelizable `for` loop (and then some).
+
+* Core functions:
+    
+    * `registerDoMC`
+
+    * `foreach`, `%dopar%`, `%do%`
+
+---
+
+## `registerDoMC` 
+
+Primarily used to set the number of cores used by `foreach`, by default uses `options("cores")` or half the number of cores found by `detectCores` from the parallel package.
+
+
+```r
+options("cores")
+
+## $cores
+## NULL
+
+detectCores()
+
+## [1] 24
+
+getDoParWorkers()
+
+## [1] 1
+
+registerDoMC(4)
+getDoParWorkers()
+
+## [1] 4
+```
+
+---
+
+## `foreach`
+
+A slightly more powerful version of base `for` loops (think `for` with an `lapply` flavor). Combined with `%do%` or `%dopar%` for single or multicore execution.
+
+
+```r
+for(i in 1:10) sqrt(i)
+
+foreach(i = 1:5) %do% 
+  sqrt(i)   
+```
+
+```
+## [[1]]
+## [1] 1
+## 
+## [[2]]
+## [1] 1.414214
+## 
+## [[3]]
+## [1] 1.732051
+## 
+## [[4]]
+## [1] 2
+## 
+## [[5]]
+## [1] 2.236068
+```
+
+
+---
+
+## `foreach` - iterators
+
+`foreach` can iterate across more than one value, but it doesn't do length coercion
+
+.pull-left[
+
+```r
+foreach(i = 1:5, j = 1:5) %do% 
+  sqrt(i^2+j^2)   
+```
+
+```
+## [[1]]
+## [1] 1.414214
+## 
+## [[2]]
+## [1] 2.828427
+## 
+## [[3]]
+## [1] 4.242641
+## 
+## [[4]]
+## [1] 5.656854
+## 
+## [[5]]
+## [1] 7.071068
+```
+]
+
+.pull-right[
+
+```r
+foreach(i = 1:5, j = 1:2) %do% 
+  sqrt(i^2+j^2)   
+```
+
+```
+## [[1]]
+## [1] 1.414214
+## 
+## [[2]]
+## [1] 2.828427
+```
+]
+
+---
+
+## `foreach` - combining results
+
+
+```r
+foreach(i = 1:5, .combine='c') %do% 
+  sqrt(i)   
+```
+
+```
+## [1] 1.000000 1.414214 1.732051 2.000000 2.236068
+```
+
+```r
+foreach(i = 1:5, .combine='cbind') %do% 
+  sqrt(i)   
+```
+
+```
+##      result.1 result.2 result.3 result.4 result.5
+## [1,]        1 1.414214 1.732051        2 2.236068
+```
+
+```r
+foreach(i = 1:5, .combine='+') %do% 
+  sqrt(i)   
+```
+
+```
+## [1] 8.382332
+```
+
+---
+
+## `foreach` - parallelization
+
+Swapping out `%do%` for `%dopar%` will use the parallel backend.
+
+
+```r
+registerDoMC(4)
+```
+
+
+```r
+system.time(foreach(i = 1:10) %dopar% mean(rnorm(1e6)))
+```
+
+```
+##    user  system elapsed 
+##   0.713   0.075   0.363
+```
+
+```r
+registerDoMC(8)
+system.time(foreach(i = 1:10) %dopar% mean(rnorm(1e6)))
+```
+
+```
+##    user  system elapsed 
+##   1.154   0.134   0.478
+```
+
+```r
+registerDoMC(12)
+system.time(foreach(i = 1:10) %dopar% mean(rnorm(1e6)))
+```
+
+```
+##    user  system elapsed 
+##   1.032   0.115   0.353
+```
+
+
+---
+
+## Example - Bootstraping
+
+Bootstrapping is a resampling scheme where the original data is repeatedly reconstructed by taking a sample (with replacement) of the same size as the original data, and using that to conduct whatever analysis procedure is of interest. Below is an example of fitting a local regression (`loess`) to some synthetic data, we will construct a bootstrap prediction interval for this model.
+
+. . .
+
+
+```r
+set.seed(3212016)
+d = data.frame(x = 1:120) %&gt;%
+    mutate(y = sin(2*pi*x/120) + runif(length(x),-1,1))
+
+l = loess(y ~ x, data=d)
+d = d %&gt;% mutate(
+  pred_y = predict(l),
+  pred_y_se = predict(l,se=TRUE)$se.fit
+) %&gt;% mutate(
+  pred_low  = pred_y - 1.96 * pred_y_se,
+  pred_high = pred_y + 1.96 * pred_y_se
+)
+```
+
+---
+
+
+```r
+ggplot(d, aes(x,y)) +
+  geom_point(color="gray50") +
+  geom_ribbon(aes(ymin=pred_low, ymax=pred_high), fill="red", alpha=0.25) +
+  geom_line(aes(y=pred_y)) +
+  theme_bw()
+```
+
+&lt;img src="Lec13_parallel_files/figure-html/unnamed-chunk-18-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Example - Cont.
+
+We will now re-implement the code below using one of the parallelization techniques we have just discussed and will then check the performance with 1, 2, and 4 cores.
+
+
+
+```r
+n_rep = 5000
+d_xy = select(d, x, y)
+
+res = map(1:n_rep, function(i) {
+  d_xy %&gt;% 
+    select(x,y) %&gt;% 
+    sample_n(nrow(d), replace=TRUE) %&gt;%
+    loess(y ~ x, data=.) %&gt;%
+    predict(newdata=d) %&gt;%
+    setNames(NULL)
+}) %&gt;% do.call(cbind, .)
+
+d = d %&gt;% mutate(
+  bs_low = apply(res,1,quantile,probs=c(0.025), na.rm=TRUE),
+  bs_high  = apply(res,1,quantile,probs=c(0.975), na.rm=TRUE)
+)
+```
+
+---
+
+
+```r
+ggplot(d, aes(x,y)) +
+  geom_point(color="gray50") +
+  geom_ribbon(aes(ymin=pred_low, ymax=pred_high), fill="red", alpha=0.25) +
+  geom_ribbon(aes(ymin=bs_low, ymax=bs_high), fill="blue", alpha=0.25) +
+  geom_line(aes(y=pred_y)) +
+  theme_bw()
+```
+
+&lt;img src="imgs/bootstrap_loess.png" width="2799" style="display: block; margin: auto;" /&gt;
+
+---
+
+## What to use when?
+
+Optimal use of multiple cores is hard, there isn't one best solution
+
+* Don't underestimate the overhead cost
+
+* More art than science - experimentation is key
+
+* Measure it or it didn't happen
+
+* Be aware of the trade off between developer time and run time
+
+
+---
+class: middle
+count: false
+
+# BLAS and LAPACK
+
+---
+
+## Statistics and Linear Algebra
+
+An awful lot of statistics is at its core linear algebra.
+
+&lt;br/&gt;
+
+For example:
+
+* Linear regession models, find
+
+$$ \hat{\beta} = (X^T X)^{-1} X^Ty $$
+
+* Principle component analysis
+
+    * Find `\(T = XW\)` where `\(W\)` is a matrix whose columns are the eigenvectors of `\(X^TX\)`.
+    
+    * Often solved via SVD - Let `\(X = U\Sigma W^T\)` then `\(T = U\Sigma\)`.
+
+
+---
+
+## Numerical Linear Algebra
+
+Not unique to Statistics, these are the type of problems that come up across all areas of numerical computing.
+
+* Numerical linear algebra `\(\ne\)` mathematical linear algebra
+
+&lt;br/&gt;
+
+* Efficiency and stability of numerical algorithms matter
+
+    * Designing and implementing these algorithms is hard
+
+&lt;br/&gt;
+
+* Don't reinvent the wheel - common core linear algebra tools (well defined API)
+
+
+
+---
+
+## BLAS and LAPACK
+
+Low level algorithms for common linear algebra operations
+
+&lt;br/&gt;
+
+BLAS
+
+* **B**asic **L**inear **A**lgebra **S**ubprograms
+
+* Copying, scaling, multiplying vectors and matrices
+
+* Origins go back to 1979, written in Fortran
+
+&lt;br/&gt;
+
+LAPACK
+
+* **L**inear **A**lgebra **Pack**age
+
+* Higher level functionality building on BLAS.
+
+* Linear solvers, eigenvalues, and matrix decompositions
+
+* Origins go back to 1992, mostly Fortran (expanded on LINPACK, EISPACK)
+
+
+---
+
+## Modern variants?
+
+Most default BLAS and LAPACK implementations (like R's defaults) are somewhat dated
+
+* Written in Fortran and designed for a single cpu core  
+
+* Certain (potentially non-optimal) hard coded defaults (e.g. block size).
+
+&lt;br/&gt;
+
+Multithreaded alternatives:
+
+* ATLAS - Automatically Tuned Linear Algebra Software
+
+* OpenBLAS - fork of GotoBLAS from TACC at UTexas
+
+* Intel MKL - Math Kernel Library, part of Intel's commercial compiler tools
+
+* cuBLAS / Magma - GPU libraries from NVidia and UTK respectively
+
+
+---
+
+## OpenBLAS  Matrix Multiply (DGEMM) Performance
+
+
+
+|  n   | 1 core | 2 cores | 4 cores | 8 cores |
+|------|--------|---------|---------|---------|
+| 100  |  0.001 | 0.001   | 0.000   | 0.000   |
+| 500  |  0.018 | 0.011   | 0.008   | 0.008   |
+| 1000 |  0.128 | 0.068   | 0.041   | 0.036   |
+| 2000 |  0.930 | 0.491   | 0.276   | 0.162   |
+| 3000 |  3.112 | 1.604   | 0.897   | 0.489   |
+| 4000 |  7.330 | 3.732   | 1.973   | 1.188   |
+| 5000 | 14.223 | 7.341   | 3.856   | 2.310   |
+
+---
+
+
+```
+## Warning: Removed 2 rows containing missing values (geom_point).
+```
+
+```
+## Warning: Removed 2 rows containing missing values (geom_path).
+```
+
+&lt;img src="Lec13_parallel_files/figure-html/unnamed-chunk-23-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+
+```
+## Warning: Removed 2 rows containing missing values (geom_point).
+```
+
+```
+## Warning: Removed 2 rows containing missing values (geom_path).
+```
+
+&lt;img src="Lec13_parallel_files/figure-html/unnamed-chunk-24-1.png" style="display: block; margin: auto;" /&gt;
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+  }
+});
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

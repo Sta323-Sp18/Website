@@ -26,6 +26,10 @@ a, a > code {
   font-size: 150%;
 }
 
+.normal {
+  font-size: 95%;
+}
+
 .small {
   font-size: 80%;
 }

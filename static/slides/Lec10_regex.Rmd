@@ -1,40 +1,71 @@
 ---
-layout: page
 title: Regular Expressions
-reading: "<a href='http://perso.ens-lyon.fr/lise.vaudor/Rfigures/Expressions_regulieres/regexp.png'>Regex Cheat Sheet</a>, <a href='https://cran.r-project.org/web/packages/stringr/vignettes/stringr.html'>stringr</a>"
-notes: ""
-output: 
-    ioslides_presentation:
-        widescreen: true
-slides: true
-link: true
+author: "Colin Rundel"
+date: "2018-02-20"
+output:
+  xaringan::moon_reader:
+    css: "slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
 ---
+exclude: true
 
-```{r echo=FALSE}
-suppressMessages(library(stringr))
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+options(
+  htmltools.dir.version = FALSE, # for blogdown
+  width = 80,
+  tibble.width = 80
+)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+library(emo)
+htmltools::tagList(rmarkdown::html_dependency_font_awesome())
 ```
+
+```{r setup, message=FALSE}
+library(stringr)
+```
+
+---
+class: middle
+count: false
 
 # stringr
 
-## stringr {.smaller}
+---
+
+## stringr
 
 stringr is a string handling package written by Hadley Wickham that is designed to improve / simplify string handling in R. Most are wrappers for base R functions. 
 
+.small[
 |                                           |                                     |
-|-------------------------------------------|-------------------------------------|
+|:------------------------------------------|:------------------------------------|
 |`str_detect(string, pattern)`              | Detect the presence or absence of a pattern in a string. |
 |`str_locate(string, pattern)`              | Locate the first position of a pattern and return a matrix with start and end. |
 |`str_extract(string, pattern)`             | Extracts text corresponding to the first match. |
 |`str_match(string, pattern)`               | Extracts capture groups formed by `()` from the first match. |
 |`str_split(string, pattern)`               | Splits string into pieces and returns a list of character vectors. |
 |`str_replace(string, pattern, replacement)`| Replaces the first matched pattern and returns a character vector. |
+]
 
 <br/>
 
 Many of these functions have variants with an `_all` suffix which will match more than one occurrence of the pattern in a given string.
 
+---
+class: middle
+count: false
 
 # Regular Expressions
+
+---
 
 ## Simple Pattern Detection
 
@@ -42,15 +73,29 @@ Many of these functions have variants with an `_all` suffix which will match mor
 text = c("The","quick","brown","fox","jumps","over","the","lazy","dog")
 ```
 
+--
+
 ```{r}
-str_detect(text,"quick")
-str_detect(text,"o")
-str_detect(text,"row")
+str_detect(text, "quick")
 ```
 
-## Escape Characters {.smaller}
+--
 
-An escape character is a character which results in an alternative interpretation of the following character(s). These vary from language to language but most often `\` is the escape character and it is followed by a single character.
+```{r}
+str_detect(text, "o")
+```
+
+--
+
+```{r}
+str_detect(text, "row")
+```
+
+---
+
+## Aside - Escape Characters 
+
+An escape character is a character which results in an alternative interpretation of the following character(s). These vary from language to language but for most string implementations `\` will be the escape character which is then modified by a single subsequent character.
 
 Some common examples:
 
@@ -65,16 +110,31 @@ Some common examples:
 |`\b`| backspace        |
 |`\f`| form feed        |
 
+---
+
 ## Examples
 
+.pull-left[
+```{r error=TRUE}
+print("a\"b")
+print("a\tb")
+print("a\nb")
+print("a\\b")
+```
+]
+
+.pull-right[
 ```{r error=TRUE}
 cat("a\"b")
 cat("a\tb")
 cat("a\nb")
+cat("a\\b")
 ```
+]
 
+---
 
-## Metacharacters {.smaller .build}
+## RegEx Metacharacters
 
 The power of regular expressions comes from the ability to use a number of special metacharacters that modify how pattern matching is performed.
 
@@ -82,18 +142,24 @@ The power of regular expressions comes from the ability to use a number of speci
 . ^ $ * + ? { } [ ] \ | ( )
 ```
 
-Because of their special properties they cannot be matched directly, if you need to match one of them you need to escape it first (precede it by `\`). One problem is that regex escapes live on top of regular string escapes, so there needs to be *two* levels of escapes.
+--
+
+Because of their special properties they cannot be matched directly, if you need to match one you need to escape it first (precede it by `\`). The problem is that regex escapes live on top of regular string escapes, so there needs to be *two* levels of escapes.
 
 <br/>
 
-| Pattern | Regex | String    |
+--
+
+| Pattern | Regex Pattern | String Literal |
 |---------|-------|-----------|
 | `.`     | `\.`  | `"\\."`   |
 | `?`     | `\?`  | `"\\?"`   |
 | `!`     | `\!`  | `"\\!"`   |
 
 
-## Example {.build}
+---
+
+## Example
 
 ```{r error=TRUE}
 str_detect("abc[def","\[")
@@ -103,93 +169,164 @@ str_detect("abc[def","\[")
 str_detect("abc[def","\\[")
 ```
 
+--
 
-## Pop quiz {.build}
+How do we detect if a string contains a `\` character?
 
-How do you detect if a string contains a `\` character?
+--
 
 ```{r}
 cat("abc\\def\n")
 str_detect("abc\\def","\\\\")
 ```
 
+---
+
 ## XKCD's take
 
-<br/>
 
-<center>
-<img src="imgs/xkcd_backslashes.png" width=1000>
-</center>
 
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("imgs/xkcd_backslashes.png")
+```
+
+
+---
 
 ## Anchors
 
-Sometimes we want to specify that our pattern occurs at a particular location, we can do this using anchors.
+Sometimes we want to specify that our pattern occurs at a particular location in a string, we indicate this using anchor metacharacters.
 
-|      | |
-|------|-|
+|      |    |
+|------|:---|
 | `^` or `\A` | Start of string   |
 | `$` or `\Z` | End of string     |
 | `\b`        | Word boundary     |  
 | `\B`        | Not word boundary |
 
-## Anchor Examples {.smaller .build}
+---
+
+## Anchor Examples
 
 ```{r}
 text = "the quick brown fox jumps over the lazy dog"
 ```
 
+--
+
 ```{r}
 str_replace(text,"^the","---")
+```
+
+--
+
+```{r}
 str_replace(text,"^dog","---")
+```
+
+--
+
+```{r}
 str_replace(text,"the$","---")
+```
+
+--
+
+```{r}
 str_replace(text,"dog$","---")
 ```
 
 
-## Anchor Examples {.smaller .build}
+---
+
+## Anchor Examples
 
 ```{r}
 text = "the quick brown fox jumps over the lazy dog"
 ```
 
+--
+
 ```{r}
-str_replace(text,"\\Brow\\B","---")
-str_replace(text,"\\bthe","---")
-str_replace(text,"the\\b","---")
+str_replace_all(text,"\\Brow\\B","---")
+```
+
+--
+
+```{r}
+str_replace_all(text,"\\brow\\b","---")
+```
+
+--
+
+```{r}
 str_replace_all(text,"\\bthe","---")
 ```
 
+--
 
-## More complex patterns {.smaller .build}
+```{r}
+str_replace_all(text,"the\\b","---")
+```
+
+
+
+---
+
+## More complex patterns
 
 If there are more than one pattern we would like to match we can use the or (`|`) metacharacter.
 
-```{r}
-text = "the quick brown fox jumps over the lazy dog"
-```
+--
 
 ```{r}
-str_replace(text,"the|dog","---")
-str_replace(text,"the|row","---")
 str_replace_all(text,"the|dog","---")
+```
+
+--
+
+```{r}
 str_replace_all(text,"the|row","---")
 ```
 
+--
+
+```{r}
+str_replace_all(text,"a|e|i|o|u","-")
+```
+
+--
+
+```{r}
+str_replace_all(text,"\\ba|e|i|o|u","-")
+```
+
+--
+
+```{r}
+str_replace_all(text,"\\b(a|e|i|o|u)","-")
+```
+
+
+
+---
 
 ## Character Classes
 
 When we want to match whole classes of characters at a time there are a number of convenience patterns built in,
 
-|      | |
-|------|-|
-| `.`  | Any character except new line (`\n`) | 
-| `\s` | White space |
-| `\S` | Not white space |
-| `\d` | Digit (0-9)|
-| `\D` | Not digit |
-| `\w` | Word (A-Z, a-z, 0-9, or _) |
-| `\W` | Not word |
+| Meta character | Class | Description |
+|------|-------------|:-|
+| `.`  |             | Any character except new line (`\n`) | 
+| `\s` | `[:space:]` | White space |
+| `\S` |             | Not white space |
+| `\d` | `[:digit:]` | Digit (0-9)|
+| `\D` |             | Not digit |
+| `\w` |             | Word (A-Z, a-z, 0-9, or _) |
+| `\W` |             | Not word |
+|      | `[:punct:]` | Punctionation |
+
+---
 
 ## A hierarchical view
 
@@ -199,7 +336,9 @@ When we want to match whole classes of characters at a time there are a number o
 
 From http://perso.ens-lyon.fr/lise.vaudor/strings-et-expressions-regulieres/
 
-## Example {.smaller .build}
+---
+
+## Example
 
 How would we write a regular expression to match a telephone number with the form `(###) ###-####`?
 
@@ -207,48 +346,66 @@ How would we write a regular expression to match a telephone number with the for
 text = c("apple", "(219) 733-8965", "(329) 293-8753")
 ```
 
+--
+
 ```{r error=TRUE}
 str_detect(text, "(\d\d\d) \d\d\d-\d\d\d\d")
 ```
 
+--
+
 ```{r}
 str_detect(text, "(\\d\\d\\d) \\d\\d\\d-\\d\\d\\d\\d")
 ```
+
+--
 
 ```{r}
 str_detect(text, "\\(\\d\\d\\d\\) \\d\\d\\d-\\d\\d\\d\\d")
 ```
 
 
-## Lists and Ranges
+---
 
-We can also specify our own character groups through the construction of lists and ranges
+## Classes and Ranges
+
+We can also specify our own classes using the square bracket meta character
 
 |          | |
 |----------|-|
-| `[abc]`  | List (a or b or c) |
-| `[^abc]` | Excluded list (not a or b or c) |
-| `[a-q]`  | Range lower case letter from a to q |
-| `[A-Q]`  | Range upper case letter from A to Q |
+| `[abc]`  | Class (a or b or c) |
+| `[^abc]` | Negated class (not a or b or c) |
+| `[a-c]`  | Range lower case letter from a to c |
+| `[A-C]`  | Range upper case letter from A to C |
 | `[0-7]`  | Digit from 0 to 7 |
 
-## Example {.smaller .build}
+---
+
+## Example
 
 ```{r}
 text = c("apple", "(219) 733-8965", "(329) 293-8753")
 ```
 
+--
+
 ```{r}
-str_replace_all(text, "[aeiou]", "")
+str_replace_all(text, "[aeiou]", "&")
 ```
+
+--
 
 ```{r}
 str_replace_all(text, "[13579]", "*")
 ```
 
+--
+
 ```{r}
-str_replace_all(text, "[1-5a-ep]", "*")
+str_replace_all(text, "[1-5a-ep]", "^")
 ```
+
+---
 
 ## Exercises 1
 
@@ -270,18 +427,22 @@ dput(randomNames(20, name.order="first.last", name.sep=" "))
 ```
 
 
+---
+
 ## Quantifiers
 
-Attached to literals, character classes, ranges or groups to match repeats.
+Attached to literals or character classes these allow a match to repeat some number of time.
 
 |         | |
-|---------|-|
+|---------|:-|
 | `*`     | Match 0 or more |
 | `+`     | Match 1 or more |
 | `?`     | Match 0 or 1 |
 | `{3}`   | Match Exactly 3 |
 | `{3,}`  | Match 3 or more |
 | `{3,5}` | Match 3, 4 or 5 |
+
+---
 
 ## Example
 
@@ -291,15 +452,21 @@ How would we improve our previous regular expression for matching a telephone nu
 text = c("apple", "(219) 733-8965", "(329) 293-8753")
 ```
 
+--
+
 ```{r}
 str_detect(text, "\\(\\d\\d\\d\\) \\d\\d\\d-\\d\\d\\d\\d")
 ```
+
+--
 
 ```{r}
 str_detect(text, "\\(\\d{3}\\) \\d{3}-\\d{4}")
 ```
 
-## Greedy vs ungreedy matching {.build}
+---
+
+## Greedy vs ungreedy matching
 
 What went wrong here?
 
@@ -311,37 +478,50 @@ text = "<div class='main'> <div> <a href='here.pdf'>Here!</a> </div> </div>"
 str_extract(text, "<div>.*</div>")
 ```
 
-If you add `?` after a quantifier, the matching will be *ungreedy* (find the shortest possible match, not the longest). 
+<br/>
+
+--
+
+If you add `?` after a quantifier, the matching will be *non-greedy* (find the shortest possible match, not the longest). 
 
 ```{r}
 str_extract(text, "<div>.*?</div>")
 ```
 
+---
+
 ## Groups
 
-Group together parts of a regular expression for modification or capture.
+Groups all you to connect together parts of a regular expression for modification or capture.
 
 |           | |
-|-----------|-|
-| `(a|b)`   | match literal a or b, group either
-| `a(bc)?`  | match literal a or abc, group bc or ""
-| `(?:abc)` | Non-c­apt­uring group
-| `(abc)def(hig)| match abcdefhig, group abc and hig
+|-----------|:-|
+| (a &vert; b)   | match literal "a" or "b", group either |
+| `a(bc)?`  | match "a" or "abc", group bc or nothing |
+| `(abc)def(hig)` | match "abcdefhig", group abc and hig |
+| `(?:abc)` | match "abc", non-capturing group | 
 
+---
 
-## Example {.smaller .build}
+## Example
 
 ```{r}
 text = c("Bob Smith", "Alice Smith", "Apple")
 ```
 
+--
+
 ```{r}
 str_extract(text, "^[:alpha:]+")
 ```
 
+--
+
 ```{r}
 str_match(text, "^([:alpha:]+) [:alpha:]+")
 ```
+
+--
 
 ```{r}
 str_match(text, "^([:alpha:]+) ([:alpha:]+)")
@@ -349,10 +529,14 @@ str_match(text, "^([:alpha:]+) ([:alpha:]+)")
 
 
 
-## How not to use a RegEx {.smaller}
+
+---
+
+## How not to use a RegEx
 
 Validating an email address:
 
+.small[
 ```
 (?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:
  [\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")
@@ -360,6 +544,9 @@ Validating an email address:
 (?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*
 [a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])
 ```
+]
+
+---
 
 ## Exercise 2
 
@@ -372,8 +559,11 @@ text = c("apple", "219 733 8965", "329-293-8753", "Work: (579) 499-7527; Home: (
 
 * Once that works use groups to extracts the area code separately from the rest of the phone number.
 
+---
 
 # Acknowledgments
+
+---
 
 ## Acknowledgments
 

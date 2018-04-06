@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Web Scraping</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Colin Rundel" />
+    <meta name="date" content="2018-02-22" />
+    <link href="libs/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Web Scraping
+### Colin Rundel
+### 2018-02-22
+
+---
+
+exclude: true
+
+
+
+
+```r
+library(magrittr)
+library(rvest)
+```
+
+---
+class: middle
+count: false
+
+# Web Scraping with rvest
+
+---
+
+## Hypertext Markup Language
+
+Most of the data on the web is still largely available as HTML - while it is structured (hierarchical / tree based) it often is not available in a form useful for analysis (flat / tidy).
+
+```html
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;This is a title&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;p align="center"&gt;Hello world!&lt;/p&gt;
+    &lt;br/&gt;
+    &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+    &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+    &lt;div class="contact"&gt;
+      &lt;div class="home"&gt;555-555-1234&lt;/div&gt;
+      &lt;div class="home"&gt;555-555-2345&lt;/div&gt;
+      &lt;div class="work"&gt;555-555-9999&lt;/div&gt;
+      &lt;div class="fax"&gt;555-555-8888&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+```
+
+---
+
+## rvest
+
+`rvest` is a package from Hadley Wickham that makes basic processing and manipulation of HTML data straight forward.
+
+&lt;br/&gt;
+
+Core functions:
+
+* `read_html` - read HTML data from a url or character string.
+
+* `html_nodes` - select specified nodes from the HTML document usign CSS selectors.
+
+* `html_table` - parse an HTML table into a data frame.
+
+* `html_text` - extract tag pairs' content.
+
+* `html_name` - extract tags' names.
+
+* `html_attrs` - extract all of each tag's attributes.
+
+* `html_attr` - extract tags' attribute value by name.
+
+---
+
+## html, rvest, &amp; xml2
+
+
+```r
+html = 
+'&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;This is a title&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;p align="center"&gt;Hello world!&lt;/p&gt;
+    &lt;br/&gt;
+    &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+    &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+    &lt;div class="contact"&gt;
+      &lt;div class="home"&gt;555-555-1234&lt;/div&gt;
+      &lt;div class="home"&gt;555-555-2345&lt;/div&gt;
+      &lt;div class="work"&gt;555-555-9999&lt;/div&gt;
+      &lt;div class="fax"&gt;555-555-8888&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;'
+
+
+read_html(html)
+```
+
+```
+## {xml_document}
+## &lt;html&gt;
+## [1] &lt;head&gt;\n&lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8 ...
+## [2] &lt;body&gt;\n    &lt;p align="center"&gt;Hello world!&lt;/p&gt;\n    &lt;br&gt;&lt;div class="name" ...
+```
+
+---
+
+## css selectors
+
+We will be using a tool called selector gadget to help up identify the html elements of interest - it does this by constructing a css selector which can be used to subset the html document.
+
+.small[
+
+Selector          |  Example         | Description
+:-----------------|:-----------------|:--------------------------------------------------
+element           |  `p`             | Select all &amp;lt;p&amp;gt; elements
+element element   |  `div p`         | Select all &amp;lt;p&amp;gt; elements inside a &amp;lt;div&amp;gt; element
+element&gt;element   |  `div &gt; p`       | Select all &amp;lt;p&amp;gt; elements with &amp;lt;div&amp;gt; as a parent
+.class            |  `.title`        | Select all elements with class="title"
+#id               |  `#name`         | Select all elements with id="name"
+[attribute]       |  `[class]`       | Select all elements with a class attribute
+[attribute=value] |  `[class=title]` | Select all elements with class="title"
+
+]
+
+---
+
+## Selecting tags
+
+
+```r
+read_html(html) %&gt;% html_nodes("p")
+```
+
+```
+## {xml_nodeset (1)}
+## [1] &lt;p align="center"&gt;Hello world!&lt;/p&gt;
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_nodes("p") %&gt;% html_text()
+```
+
+```
+## [1] "Hello world!"
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_nodes("p") %&gt;% html_attrs()
+```
+
+```
+## [[1]]
+##    align 
+## "center"
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_nodes("p") %&gt;% html_attr("align")
+```
+
+```
+## [1] "center"
+```
+
+---
+
+## More selecting tags
+
+
+```r
+read_html(html) %&gt;% html_nodes("div")
+```
+
+```
+## {xml_nodeset (7)}
+## [1] &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+## [2] &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+## [3] &lt;div class="contact"&gt;\n      &lt;div class="home"&gt;555-555-1234&lt;/div&gt;\n       ...
+## [4] &lt;div class="home"&gt;555-555-1234&lt;/div&gt;
+## [5] &lt;div class="home"&gt;555-555-2345&lt;/div&gt;
+## [6] &lt;div class="work"&gt;555-555-9999&lt;/div&gt;
+## [7] &lt;div class="fax"&gt;555-555-8888&lt;/div&gt;
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_nodes("div") %&gt;% html_text()
+```
+
+```
+## [1] "John"                                                                                  
+## [2] "Doe"                                                                                   
+## [3] "\n      555-555-1234\n      555-555-2345\n      555-555-9999\n      555-555-8888\n    "
+## [4] "555-555-1234"                                                                          
+## [5] "555-555-2345"                                                                          
+## [6] "555-555-9999"                                                                          
+## [7] "555-555-8888"
+```
+
+
+---
+
+## Nesting tags
+
+
+```r
+read_html(html) %&gt;% html_nodes("body div")
+```
+
+```
+## {xml_nodeset (7)}
+## [1] &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+## [2] &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+## [3] &lt;div class="contact"&gt;\n      &lt;div class="home"&gt;555-555-1234&lt;/div&gt;\n       ...
+## [4] &lt;div class="home"&gt;555-555-1234&lt;/div&gt;
+## [5] &lt;div class="home"&gt;555-555-2345&lt;/div&gt;
+## [6] &lt;div class="work"&gt;555-555-9999&lt;/div&gt;
+## [7] &lt;div class="fax"&gt;555-555-8888&lt;/div&gt;
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_nodes("body&gt;div")
+```
+
+```
+## {xml_nodeset (3)}
+## [1] &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+## [2] &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+## [3] &lt;div class="contact"&gt;\n      &lt;div class="home"&gt;555-555-1234&lt;/div&gt;\n       ...
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_nodes("body div div")
+```
+
+```
+## {xml_nodeset (4)}
+## [1] &lt;div class="home"&gt;555-555-1234&lt;/div&gt;
+## [2] &lt;div class="home"&gt;555-555-2345&lt;/div&gt;
+## [3] &lt;div class="work"&gt;555-555-9999&lt;/div&gt;
+## [4] &lt;div class="fax"&gt;555-555-8888&lt;/div&gt;
+```
+
+---
+
+## CSS, classes, and ids
+
+
+```r
+read_html(html) %&gt;% html_nodes(".name")
+```
+
+```
+## {xml_nodeset (2)}
+## [1] &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+## [2] &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+```
+
+--
+
+
+
+```r
+read_html(html) %&gt;% html_nodes("div.name")
+```
+
+```
+## {xml_nodeset (2)}
+## [1] &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+## [2] &lt;div class="name" id="last"&gt;Doe&lt;/div&gt;
+```
+
+--
+
+
+```r
+read_html(html) %&gt;% html_nodes("#first")
+```
+
+```
+## {xml_nodeset (1)}
+## [1] &lt;div class="name" id="first"&gt;John&lt;/div&gt;
+```
+
+
+---
+
+## Mixing it up
+
+
+```r
+read_html(html) %&gt;% html_nodes("[align]")
+```
+
+```
+## {xml_nodeset (1)}
+## [1] &lt;p align="center"&gt;Hello world!&lt;/p&gt;
+```
+
+
+```r
+read_html(html) %&gt;% html_nodes(".contact div")
+```
+
+```
+## {xml_nodeset (4)}
+## [1] &lt;div class="home"&gt;555-555-1234&lt;/div&gt;
+## [2] &lt;div class="home"&gt;555-555-2345&lt;/div&gt;
+## [3] &lt;div class="work"&gt;555-555-9999&lt;/div&gt;
+## [4] &lt;div class="fax"&gt;555-555-8888&lt;/div&gt;
+```
+
+---
+
+## SelectorGadget {.smaller}
+
+This is a javascript based tool that helps you interactively build an appropriate CSS selector for the content you are interested in.
+
+
+
+&lt;center&gt;
+&lt;img src='imgs/selectorgadget.png' width=500&gt; &lt;br/&gt;
+&lt;a href='http://selectorgadget.com/'&gt;http://selectorgadget.com/&lt;/a&gt;
+&lt;/center&gt;
+
+---
+
+## Exercise {.smaller}
+
+### Step 1
+
+For the movies listed in the **Top Box Office** list on `rottentomatoes.com` create a data frame with the Movies' titles, their weekend gross, their tomatometer score, and whether the movie is fresh or rotten.
+
+&lt;br/&gt;
+
+
+### Step 2
+
+Using the url for each movie, now go out and grab the average rating, number of reviews, number of fresh and rotten reviews as well as the audience score, average audience rating and number of user ratings.
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+  }
+});
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

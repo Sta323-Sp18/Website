@@ -109,114 +109,166 @@ schedule:
 
 - week: 5
   day: 2
-  lecture: "Visualization (pt. 1)"
+  lecture: "Visualization"
   readings: ""
-  notes: ""
+  notes: "<a href='https://www.dropbox.com/sh/3nznj0bhf84uoix/AAACIx5tI6JLCUSpR6egWipxa/STA112FS_VisDayOneSlides_Fall2017.pdf?dl=0'>Angela & Eric's slides</a>"
 
 - week: 6
   day: 0
-  lecture: "Visualization (pt. 2)"
-  readings: ""
-  notes: ""
+  lecture: "Text data & Regular expressions"
+  slides: Lec10_regex
+  readings:
+  - text: Regex Cheat Sheet, 
+    link: http://perso.ens-lyon.fr/lise.vaudor/Rfigures/Expressions_regulieres/regexp.png
+  - text: stringr vignette
+    link: https://cran.r-project.org/web/packages/stringr/vignettes/stringr.html
+  notes: "<a href='https://regexr.com/'>Interactive RegEx tool</a>"
 
 - week: 6
   day: 2
-  lecture: "Regular expressions"
-  readings: ""
-  notes: ""
-
-- week: 7
-  day: 0
   lecture: "Web scraping (pt. 1)"
-  readings: ""
-  notes: ""
+  slides: Lec11_scraping
+  screencast: https://youtu.be/unZDOUdsBTU
+  readings:
+  - text: rvest - selector gadget vignette
+    link: https://cran.r-project.org/web/packages/rvest/vignettes/selectorgadget.html
+  notes: "<a href='https://raw.githubusercontent.com/Sta323-Sp18/exercises/master/2018_02_22_exercises.R'>Exercise code</a>"
 
 - week: 7
-  day: 2
+  day: 0
   lecture: "Web scraping (pt. 2)"
   readings: ""
+  notes: "HW4 - due Fri, Mar 9th by 11:59 pm"
+
+- week: 7
+  day: 2
+  lecture: "Make"
+  slides: Lec12_make
+  readings:
+  - text: minimal make
+    link: http://kbroman.org/minimal_make/
+  - text: Why use make
+    link: http://bost.ocks.org/mike/make/
   notes: ""
 
 - week: 8
   day: 0
-  lecture: "Introduction to make"
-  readings: ""
-  notes: ""
-
-- week: 8
-  day: 2
-  lecture: "Shiny"
-  readings: ""
-  notes: ""
-
-- week: 9
-  day: 0
-  lecture: "<i>No class - Spring recess</i>"
-  readings: ""
-  notes: ""
-
-- week: 9
-  day: 2
-  lecture: "<i>No class - Spring recess</i>"
-  readings: ""
-  notes: ""
-
-- week: 10
-  day: 0
-  lecture: "Reactive data"
-  readings: ""
-  notes: ""
-
-- week: 10
-  day: 2
   lecture: "Parallelization"
+  slides: Lec13_parallel
+  readings:
+  - text: parallel package
+    link: https://stat.ethz.ch/R-manual/R-devel/library/parallel/doc/parallel.pdf
+  - text: doMC and foreach
+    link: http://cran.r-project.org/web/packages/doMC/vignettes/gettingstartedMC.pdf
+  notes: ""
+
+- week: 8
+  day: 2
+  lecture: "Web APIs"
+  slides: Lec14_web_apis
+  readings:
+  - text: httr vignette
+    link: https://cran.r-project.org/web/packages/httr/vignettes/quickstart.html
+  notes: ""
+
+- week: 9
+  day: 0
+  lecture: "<i>No class - Spring recess</i>"
   readings: ""
   notes: ""
 
+- week: 9
+  day: 2
+  lecture: "<i>No class - Spring recess</i>"
+  readings: ""
+  notes: ""
+
+- week: 10
+  day: 0
+  lecture: "Shiny"
+  screencast: https://youtu.be/SeQO3ACeN-8
+  readings:
+  - text: Shiny Documentation & Gallery
+    link: http://shiny.rstudio.com/
+  - text: Widget Gallery
+    link: http://shiny.rstudio.com/gallery/widget-gallery.html
+  notes: ""
+
+- week: 10
+  day: 2
+  lecture: "Reactive Data"
+  readings: ""
+  notes: ""
+  screencast: https://youtu.be/Cqd8WRAhszs
+
 - week: 11
   day: 0
-  lecture: "Databases, sql, & dplyr"
-  readings: ""
+  lecture: "Profiling"
+  screencast: https://youtu.be/N6Y5l0nffiE
+  readings: 
+  - text: profvis
+    link: https://rstudio.github.io/profvis/
   notes: ""
 
 - week: 11
   day: 2
+  lecture: "Databases & sql"
+  readings: ""
+  notes: ""
+  slides: Lec15_sql
+
+- week: 12
+  day: 0
   lecture: "Bigish data"
-  readings: ""
-  notes: ""
-
-- week: 12
-  day: 0
-  lecture: "Spatial data"
-  readings: ""
-  notes: ""
+  slides: Lec16_bigish_data
+  readings: 
+  - text: dbplyr Vignette
+    link: https://cran.r-project.org/web/packages/dbplyr/vignettes/dbplyr.html
+  - text: SQL Translation
+    link: https://cran.r-project.org/web/packages/dbplyr/vignettes/sql-translation.html
+  
 
 - week: 12
   day: 2
+  lecture: "Spatial data"
+  slides: Lec17_Spatial
+  readings:
+  - text: "sf Vignettes"
+    link: https://cran.r-project.org/web/packages/sf/vignettes/
+  notes: "HW6 - due by 11:59 pm on Tuesday, April 17th"
+
+- week: 13
+  day: 0
   lecture: "Precinct boundaries (pt. 1)"
   readings: ""
   notes: ""
 
 - week: 13
-  day: 0
+  day: 2
   lecture: "Precinct boundaries (pt. 2)"
   readings: ""
   notes: ""
 
-- week: 13
-  day: 2
-  lecture: "SparklyR"
-  readings: ""
-  notes: ""
-
 - week: 14
   day: 0
+  lecture: "SparklyR"
+  readings: ""
+  notes: "Midterm 2 out - due Friday April 27th by 11:59 pm"
+
+- week: 14
+  day: 2
   lecture: "SparklyR & text data"
   readings: ""
   notes: ""
 
-- week: 14
+- week: 15
+  day: 0
+  lecture: "Exam workday"
+  readings: ""
+  notes: ""
+
+- week: 16
   day: 2
-  lecture: "Final Project Presentations"
+  lecture: "Final Project due by 11:59 pm"
   readings: ""
   notes: ""

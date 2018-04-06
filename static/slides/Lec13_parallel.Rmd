@@ -1,164 +1,50 @@
 ---
-layout: page
-title: Benchmarking & Parallelization
-reading: "<a href='http://adv-r.had.co.nz/Profiling.html'>Adv. R</a>, <a href='https://rstudio.github.io/profvis/'>Profvis</a>, <br/> <a href='https://stat.ethz.ch/R-manual/R-devel/library/parallel/doc/parallel.pdf'>parallel</a>, <a href='http://cran.r-project.org/web/packages/doMC/vignettes/gettingstartedMC.pdf'>doMC and foreach</a>"
-notes: ""
-output: 
-    ioslides_presentation:
-        widescreen: true
-slides: true
-link: true
+title: Parallelization
+author: "Colin Rundel"
+date: "2018-03-06"
+output:
+  xaringan::moon_reader:
+    css: "slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
 ---
+exclude: true
 
-
-```{r set-options, echo=FALSE}
-options(width = 90)
-suppressMessages(library(dplyr))
-knitr::opts_chunk$set(fig.align="center", warning=FALSE, message=FALSE)
-```
-
-# Profiling & Benchmarking
-
-
-## Profiling & Benchmarking
-
-* Improved performance comes from iteration, and learning the most common pitfalls
-
-* Don't sweat the small stuff - Coder time vs Run time vs Compute costs
-
-* Measure it, or it didn't happen
-
-* "Premature optimization is the root of all evil (or at least most of it) in programming." -Knuth
-
-
-## How do we measure?
-
-Simplest tool is R's base `system.time` which can be used to wrap any other call or calls.
-
-```{r}
-system.time({rnorm(1e6)})
-system.time({rnorm(1e4) %*% t(rnorm(1e4))})
-``` 
-
-
-## Better benchmarking (pt. 1) {.smaller}
-
-We can do better (better precision) using the microbenchmark package 
-
-```{r, eval=FALSE}
-install.packages("microbenchmark")
-```
-```{r}
-library(microbenchmark)
-
-d = abs(rnorm(1000))
-r = microbenchmark(
-      exp(log(d)/2),
-      d^0.5,
-      sqrt(d),
-      times = 1000
-    )
-print(r)
-```
-
-
-##
-
-```{r}
-boxplot(r)
-```
-
-
-## Better benchmarking (pt. 2) {.smaller}
-
-We can also do better using the rbenchmark package 
-
-```{r, eval=FALSE}
-install.packages("rbenchmark")
-```
-```{r}
-library(rbenchmark)
-
-d = abs(rnorm(1000))
-benchmark(
-  exp(log(d)/2),
-  d^0.5,
-  sqrt(d),
-  replications = 1000,
-  order = "relative"
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+options(
+  htmltools.dir.version = FALSE, # for blogdown
+  width = 80,
+  tibble.width = 80
 )
-```
 
-
-## Example 1 {.smaller}
-
-Earlier we mentioned that growing a vector as you collect results is bad, just how bad is it? Benchmark the following three functions and compare their performance.
-
-
-```{r, eval=FALSE}
-good = function() {
-    res = rep(NA, 1e4)
-    for(i in seq_along(res))
-        res[i] = sqrt(i)
-}
-```
-
-
-```{r, eval=FALSE}
-bad = function() {
-    res = numeric()
-    for(i in 1:1e4)
-        res = c(res,sqrt(i))
-
-}
-```
-
-```{r, eval=FALSE}
-best = function() {
-    sqrt(1:1e4)
-}
-```
-
-
-## Example 2 {.smaller}
-
-Lets compare looping vs. the map (apply) function vs dplyr.
-
-* First we will construct a large data frame
-
-```{r, eval=FALSE}
-set.seed(523)
-d = data_frame(
-  A = rnorm(1e5),
-  B = runif(1e5),
-  C = rexp(1e5),
-  D = sample(letters, 1e5, replace=TRUE)               
+knitr::opts_chunk$set(
+  fig.align = "center"
 )
+
+htmltools::tagList(rmarkdown::html_dependency_font_awesome())
 ```
 
-* Implement functions that will return a data frame containing the maximum value of each *column*
-    
-    * A `map` function
-    * A single `for` loop
-    * dplyr
-
-* Benchmark all of your preceding functions using data frame `d`, which is the fastest, why do you think this is the case? 10 replicates per function is sufficient.
-
-* What would happen if `d` was smaller? (e.g. take only the first 1000 rows)
-
-
-
-```{r echo=FALSE, message=FALSE}
-library(parallel)
-library(doMC)
-library(foreach)
+```{r setup, echo=FALSE}
 library(dplyr)
 library(ggplot2)
-library(purrr)
 library(tidyr)
+library(parallel)
+library(foreach)
+library(doMC)
+
+ggplot2::theme_set(theme_bw())
 ```
 
+---
+class: middle
+count: false
+
 # Parallelization
+
+---
 
 ## `parallel`
 
@@ -177,7 +63,9 @@ Part of the base packages in R
     * `mcparallel` & `mccollect`
 
 
-## detectCores
+---
+
+## `detectCores`
 
 Surprisingly, detects the number of cores of the current system.
 
@@ -186,6 +74,8 @@ detectCores()
 
 ## [1] 24
 ```
+
+---
 
 ## pvec
 
@@ -208,8 +98,7 @@ system.time(pvec(1:1e7, sqrt, mc.cores = 8))
 ##  0.532   0.389   0.372 
 ```
 
-
-##
+---
 
 ```{r eval=FALSE}
 cores = c(1,2,4,8,16)
@@ -220,8 +109,10 @@ res = map(
      map_dbl(order, function(y) system.time(pvec(1:(10^y), sqrt, mc.cores=x))[3]) 
   }
 ) %>% do.call(rbind,.)
+
 rownames(res) = paste0(cores," cores")
 colnames(res) = paste0("10^",order)
+
 res
 
 ##            10^6  10^7  10^8
@@ -232,24 +123,9 @@ res
 ##  16 cores 0.073 0.401 4.049
 ```
 
-##
+---
 
-```{r include=FALSE}
-load("../data/pvec_res.Rdata")
-```
-
-
-```{r echo=FALSE}
-d = as_data_frame(res) %>%
-  mutate(cpus = rownames(res)) %>%
-  gather(size, time, -cpus) %>%
-  mutate(size = eval(expression(size)))
-
-ggplot(d, aes(y=time, x=size, color=cpus)) + geom_point(alpha=0.75, size=2) + scale_y_log10()
-```
-
-
-## mclapply {.smaller}
+## mclapply
 
 Parallelized version of `lapply`
 
@@ -267,11 +143,10 @@ system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 2)))
 system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 4)))
 
 ##   user  system elapsed 
-##  0.242   0.061   0.052 ```
+##  0.242   0.061   0.052
 ```
 
-
-## {.smaller}
+---
 
 ```{r eval=FALSE}
 system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 4)))
@@ -296,7 +171,9 @@ system.time(unlist(mclapply(1:10, function(x) rnorm(1e5), mc.cores = 12)))
 ```
 
 
-## mcparallel {.smaller}
+---
+
+## mcparallel
 
 Asynchronously evaluation of an R expression in a separate process
 
@@ -310,6 +187,8 @@ str(n)
 ```
 
 
+---
+
 ## mccollect
 
 Checks `mcparallel` objects for completion
@@ -318,8 +197,9 @@ Checks `mcparallel` objects for completion
 str(mccollect(list(m,n,o)))
 ```
 
+---
 
-## mccollect - waiting {.smaller}
+## mccollect - waiting
 
 ```{r}
 p = mcparallel(mean(rnorm(1e5)))
@@ -329,7 +209,13 @@ mccollect(p, wait = FALSE)     # there is no longer such a job
 ```
 
 
+---
+class: middle
+count: false
+
 # doMC & foreach
+
+---
 
 ## doMC & foreach
 
@@ -341,8 +227,9 @@ Packages by Revolution Analytics that provides the `foreach` function which is a
 
     * `foreach`, `%dopar%`, `%do%`
 
+---
 
-## registerDoMC {.smaller}
+## `registerDoMC` 
 
 Primarily used to set the number of cores used by `foreach`, by default uses `options("cores")` or half the number of cores found by `detectCores` from the parallel package.
 
@@ -366,48 +253,64 @@ getDoParWorkers()
 ## [1] 4
 ```
 
+---
 
-## foreach {.smaller}
+## `foreach`
 
 A slightly more powerful version of base `for` loops (think `for` with an `lapply` flavor). Combined with `%do%` or `%dopar%` for single or multicore execution.
 
 ```{r}
 for(i in 1:10) sqrt(i)
 
-foreach(i = 1:5) %do% sqrt(i)   
+foreach(i = 1:5) %do% 
+  sqrt(i)   
 ```
 
 
-## foreach - iterators {.smaller}
+---
+
+## `foreach` - iterators
 
 `foreach` can iterate across more than one value, but it doesn't do length coercion
 
-<div class="columns-2">
+.pull-left[
 ```{r}
-foreach(i = 1:5, j = 1:5) %do% sqrt(i^2+j^2)   
+foreach(i = 1:5, j = 1:5) %do% 
+  sqrt(i^2+j^2)   
 ```
+]
+
+.pull-right[
 ```{r}
-foreach(i = 1:5, j = 1:2) %do% sqrt(i^2+j^2)   
+foreach(i = 1:5, j = 1:2) %do% 
+  sqrt(i^2+j^2)   
 ```
-<br/><br/><br/><br/><br/><br/>
-</div>
+]
 
+---
 
-## foreach - combining results {.smaller}
+## `foreach` - combining results
 
 ```{r}
-foreach(i = 1:5, .combine='c') %do% sqrt(i)   
-foreach(i = 1:5, .combine='cbind') %do% sqrt(i)   
-foreach(i = 1:5, .combine='+') %do% sqrt(i)   
+foreach(i = 1:5, .combine='c') %do% 
+  sqrt(i)   
+foreach(i = 1:5, .combine='cbind') %do% 
+  sqrt(i)   
+foreach(i = 1:5, .combine='+') %do% 
+  sqrt(i)   
 ```
 
+---
 
-## foreach - parallelization {.smaller}
+## `foreach` - parallelization
 
 Swapping out `%do%` for `%dopar%` will use the parallel backend.
 
 ```{r}
 registerDoMC(4)
+```
+
+```{r}
 system.time(foreach(i = 1:10) %dopar% mean(rnorm(1e6)))
 registerDoMC(8)
 system.time(foreach(i = 1:10) %dopar% mean(rnorm(1e6)))
@@ -416,10 +319,13 @@ system.time(foreach(i = 1:10) %dopar% mean(rnorm(1e6)))
 ```
 
 
-## Example 3 - Bootstraping {.smaller}
+---
+
+## Example - Bootstraping
 
 Bootstrapping is a resampling scheme where the original data is repeatedly reconstructed by taking a sample (with replacement) of the same size as the original data, and using that to conduct whatever analysis procedure is of interest. Below is an example of fitting a local regression (`loess`) to some synthetic data, we will construct a bootstrap prediction interval for this model.
 
+. . .
 
 ```{r}
 set.seed(3212016)
@@ -436,17 +342,9 @@ d = d %>% mutate(
 )
 ```
 
-```{r eval=FALSE}
-ggplot(d, aes(x,y)) +
-  geom_point(color="darkgrey") +
-  geom_ribbon(aes(ymin=pred_low, ymax=pred_high), fill="red", alpha=0.25) +
-  geom_line(aes(y=pred_y)) +
-  theme_bw()
-```
+---
 
-##
-
-```{r echo=FALSE, fig.align="center", fig.width=9, fig.height=6}
+```{r fig.align="center", fig.width=9, fig.height=6}
 ggplot(d, aes(x,y)) +
   geom_point(color="gray50") +
   geom_ribbon(aes(ymin=pred_low, ymax=pred_high), fill="red", alpha=0.25) +
@@ -454,7 +352,9 @@ ggplot(d, aes(x,y)) +
   theme_bw()
 ```
 
-## Example 3 - Cont. {.smaller}
+---
+
+## Example - Cont.
 
 We will now re-implement the code below using one of the parallelization techniques we have just discussed and will then check the performance with 1, 2, and 4 cores.
 
@@ -476,7 +376,11 @@ d = d %>% mutate(
   bs_low = apply(res,1,quantile,probs=c(0.025), na.rm=TRUE),
   bs_high  = apply(res,1,quantile,probs=c(0.975), na.rm=TRUE)
 )
+```
 
+---
+
+```{r eval=FALSE}
 ggplot(d, aes(x,y)) +
   geom_point(color="gray50") +
   geom_ribbon(aes(ymin=pred_low, ymax=pred_high), fill="red", alpha=0.25) +
@@ -485,14 +389,11 @@ ggplot(d, aes(x,y)) +
   theme_bw()
 ```
 
+```{r echo=FALSE}
+knitr::include_graphics("imgs/bootstrap_loess.png")
+```
 
-## 
-
-<div class="centered">
-<img src="imgs/bootstrap_loess.png" style="width:950px">
-</div>
-
-
+---
 
 ## What to use when?
 
@@ -507,8 +408,13 @@ Optimal use of multiple cores is hard, there isn't one best solution
 * Be aware of the trade off between developer time and run time
 
 
+---
+class: middle
+count: false
 
 # BLAS and LAPACK
+
+---
 
 ## Statistics and Linear Algebra
 
@@ -529,6 +435,8 @@ $$ \hat{\beta} = (X^T X)^{-1} X^Ty $$
     * Often solved via SVD - Let $X = U\Sigma W^T$ then $T = U\Sigma$.
 
 
+---
+
 ## Numerical Linear Algebra
 
 Not unique to Statistics, these are the type of problems that come up across all areas of numerical computing.
@@ -547,7 +455,9 @@ Not unique to Statistics, these are the type of problems that come up across all
 
 
 
-## BLAS and LAPACK {.smaller}
+---
+
+## BLAS and LAPACK
 
 Low level algorithms for common linear algebra operations
 
@@ -574,6 +484,8 @@ LAPACK
 * Origins go back to 1992, mostly Fortran (expanded on LINPACK, EISPACK)
 
 
+---
+
 ## Modern variants?
 
 Most default BLAS and LAPACK implementations (like R's defaults) are somewhat dated
@@ -594,75 +506,10 @@ Multithreaded alternatives:
 
 * cuBLAS / Magma - GPU libraries from NVidia and UTK respectively
 
-<!--
-## Naming conventions
 
-BLAS and LAPACK subroutines are named using form `pmmaaa` where:
+---
 
-* `p` is a one letter code for the type of data
-
-    * `S` single precision floating point
-    * `D` double precision floating point
-    * `C` complex single precision floating point
-    * `Z` complex double precision floating point
-
-* `mm` is a two letter code for the type of matrix expected by the subroutine
-
-* `aaa` is a one to three letter code denoting the algorithm implemented by subroutine
-
-
-## BLAS Example - DGEMM{.smaller}
-
-`D` - type double, `GE` - general matrix, `MM` - matrix / matrix multiplication.
-
-```
-dgemm(   character   TRANSA,
-         character   TRANSB,
-         integer     M,
-         integer     N,
-         integer     K,
-         double precision    ALPHA,
-         double precision, dimension(lda,*)  A,
-         integer     LDA,
-         double precision, dimension(ldb,*)  B,
-         integer     LDB,
-         double precision    BETA,
-         double precision, dimension(ldc,*)  C,
-         integer     LDC 
-     )   
-```
-
-`DGEMM` performs one of the matrix-matrix operations
-
-$$C = \alpha op( A ) \times op( B ) + \beta C$$
-
-where $op( X )$ is either $op( X ) = X$ or $op( X ) = X^T$, $\alpha$ and $\beta$ are scalars, and $A$, $B$ and $C$ are matrices, with $op( A )$
-an $m$ by $k$ matrix, $op( B )$  a $k$ by $n$ matrix and $C$ an $m$ by $n$ matrix.
-
-
-## LAPACK Example - `DPOTRF` {.smaller}
-
-`D` - type double, `PO` - positive definite matrix, `TRF` - triangular factorization
-
-
-```
-dpotrf(  character   UPLO,
-         integer     N,
-         double precision, dimension( lda, * )   A,
-         integer     LDA,
-         integer     INFO 
-      )   
-```
-
-`DPOTRF` computes the Cholesky factorization of a real symmetric positive definite matrix $A$.
-
-The factorization has the form
-$$A = U^T * U,  \text{if UPLO = 'U', or}$$
-$$A = L  * L^T,  \text{if UPLO = 'L',}$$
-where $U$ is an upper triangular matrix and $L$ is lower triangular.
--->
-
-## OpenBLAS DGEMM (Matrix Multiply) Performance {.smaller}
+## OpenBLAS  Matrix Multiply (DGEMM) Performance
 
 ```{r, eval=FALSE, include=FALSE}
 library(RhpcBLASctl)
@@ -698,53 +545,35 @@ sapply(
 | 4000 |  7.330 | 3.732   | 1.973   | 1.188   |
 | 5000 | 14.223 | 7.341   | 3.856   | 2.310   |
 
-##
+---
 
-```{r echo=FALSE}
-tribble(
-  ~"n",  ~"1 core", ~"2 cores", ~"4 cores", ~"8 cores",
-  100,  0.001,  0.001, 0.000, 0.000,
-  500,  0.018,  0.011, 0.008, 0.008,
-  1000, 0.128,  0.068, 0.041, 0.036,
-  2000, 0.930,  0.491, 0.276, 0.162,
-  3000, 3.112,  1.604, 0.897, 0.489,
-  4000, 7.330,  3.732, 1.973, 1.188,
-  5000, 14.223, 7.341, 3.856, 2.310
-) %>% 
+```{r echo=FALSE, fig.width=8}
+d = tribble(
+  ~"n",  ~"1 core", ~"2 cores", ~"4 cores", ~"8 cores", ~"K20X", ~"P100",
+  500,  0.018,  0.011, 0.008, 0.008, NA     , NA     ,
+  1000, 0.128,  0.068, 0.041, 0.036, 0.00598, 0.00072,
+  2000, 0.930,  0.491, 0.276, 0.162, 0.01733, 0.00471,
+  3000, 3.112,  1.604, 0.897, 0.489, 0.05417, 0.01382,
+  4000, 7.330,  3.732, 1.973, 1.188, 0.12554, 0.03243,
+  5000, 14.223, 7.341, 3.856, 2.310, 0.24091, 0.06228
+)
+
+
+d %>% 
   gather(cores,time,-n) %>%
   ggplot(aes(x=n, y=time, color=cores)) +
-    geom_point()
+    geom_point() +
+    geom_line()
 ```
 
+---
 
+```{r echo=FALSE, fig.width=8}
+d %>% 
+  gather(cores,time,-n) %>%
+  ggplot(aes(x=n, y=time, color=cores)) +
+    geom_point() +
+    geom_line() +
+    scale_y_continuous(trans='log2')
+```
 
-## GPU vs OpenBLAS (NVidia K20X - Kepler) {.smaller}
-
-|  M   |   N   |   K   | MAGMA (ms) | cuBLAS (ms) | CPU (ms)   |
-|------|-------|-------|------------|-------------|------------|
-| 1088 |  1088 |  1088 |     4.68   |     5.98    |     69.54  |
-| 2112 |  2112 |  2112 |    29.79   |    17.33    |    329.42  |
-| 3136 |  3136 |  3136 |    98.68   |    54.17    |    958.82  |
-| 4160 |  4160 |  4160 |   230.35   |   125.54    |   2119.71  |
-| 5184 |  5184 |  5184 |   448.66   |   240.91    |   3998.74  |
-| 6208 |  6208 |  6208 |   772.88   |   412.61    |   6801.51  |
-| 7232 |  7232 |  7232 |  1224.33   |   650.76    |  10629.33  |
-| 8256 |  8256 |  8256 |  1823.29   |   967.20    |  15740.96  |
-| 9280 |  9280 |  9280 |  2590.17   |  1370.57    |  22367.01  |
-|10304 | 10304 | 10304 |  3517.43   |  1872.64    |  30597.85  |
-
-
-## GPU vs OpenBLAS (NVidia P100 - Pascal) {.smaller}
-
-|  M   |   N   |   K   | MAGMA (ms)  | cuBLAS (ms) | CPU (ms)  |
-|------|-------|-------|-------------|-------------|-----------|
-| 1088 |  1088 |  1088 |    0.94     |    0.72     |    64.82  |
-| 2112 |  2112 |  2112 |    5.60     |    4.71     |   154.75  |
-| 3136 |  3136 |  3136 |   17.71     |   13.82     |   357.92  |
-| 4160 |  4160 |  4160 |   41.45     |   32.43     |   741.42  |
-| 5184 |  5184 |  5184 |   80.21     |   62.28     |  1293.62  |
-| 6208 |  6208 |  6208 |  138.34     |  106.78     |  2223.03  |
-| 7232 |  7232 |  7232 |  218.60     |  167.36     |  3413.69  |
-| 8256 |  8256 |  8256 |  326.42     |  249.71     |  4892.46  |
-| 9280 |  9280 |  9280 |  465.48     |  353.87     |  6999.95  |
-|10304 | 10304 | 10304 |  638.43     |  483.86     |  9547.43  |

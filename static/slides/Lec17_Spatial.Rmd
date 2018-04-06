@@ -1,0 +1,568 @@
+---
+title: Spatial data
+author: "Colin Rundel"
+date: "2018-04-03"
+output:
+  xaringan::moon_reader:
+    css: "slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+exclude: true
+
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+options(
+  htmltools.dir.version = FALSE, # for blogdown
+  width = 80,
+  tibble.width = 80
+)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+htmltools::tagList(rmarkdown::html_dependency_font_awesome())
+
+library(dplyr)
+library(sf)
+library(purrr)
+library(ggplot2)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+
+options(width=100)
+cols = c("#7fc97f","#386cb0","#beaed4","#fdc086")
+```
+
+
+---
+class: middle
+count: false
+
+# Geospatial stuff is hard
+
+---
+
+## Projections
+
+```{r echo=FALSE}
+lat_lines  = map(seq(9.999, 89.999, length.out = 9), ~ cbind(seq(-179.999, -9.999, length.out=100), .))
+long_lines = map(seq(-179.999, -9.999, length.out = 17), ~ cbind(., seq(9.999, 89.999, length.out=100))) 
+
+lat_long = c(lat_lines, long_lines) %>% 
+  st_multilinestring() %>%
+  st_sfc() %>%
+  st_set_crs("+proj=longlat +datum=WGS84 +no_defs")
+```
+
+```{r echo=FALSE, fig.align="center", message=FALSE, out.width="100%", fig.height=5}
+data(wrld_simpl, package = "maptools")
+world = st_as_sf(wrld_simpl)
+
+NAm = world %>% filter(FIPS %in% c("CA","GL","MX","US"))
+NAm_google = st_transform(NAm, "+init=epsg:3857")
+
+
+par(mar=c(3,2,2,1),mfrow=c(2,3))
+plot(lat_long, col=adjustcolor("grey",alpha.f = 0.5), axes=TRUE, main="Lat/Long (epsg:4326)")
+plot(st_geometry(NAm), col="black", add=TRUE)
+
+plot(st_transform(lat_long, "+init=epsg:3857"), col=adjustcolor("grey",alpha.f = 0.5), axes=TRUE, main="Google / Web Mercator (epsg:3857)", ylim=c(0, 2e7))
+plot(st_transform(NAm, "+init=epsg:3857") %>% st_geometry(), col="black", add=TRUE)
+
+lcc = "+proj=lcc +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+plot(st_transform(lat_long, lcc), col=adjustcolor("grey",alpha.f = 0.5), axes=TRUE, main="Lambert Conformal Conic:")
+plot(st_transform(NAm, lcc) %>% st_geometry(), col="black", add=TRUE)
+
+aea = "+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+plot(st_transform(lat_long, aea), col=adjustcolor("grey",alpha.f = 0.5), axes=TRUE, main="Alberts Equal Area")
+plot(st_transform(NAm, aea) %>% st_geometry(), col="black", add=TRUE)
+
+robinson = "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+plot(st_transform(lat_long, robinson), col=adjustcolor("grey",alpha.f = 0.5), axes=TRUE, main="Robinson")
+plot(st_transform(NAm, robinson) %>% st_geometry(), col="black", add=TRUE)
+
+mollweide = "+proj=moll +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+plot(st_transform(lat_long, mollweide), col=adjustcolor("grey",alpha.f = 0.5), axes=TRUE, main="Mollweide")
+plot(st_transform(NAm, mollweide) %>% st_geometry(), col="black", add=TRUE)
+```
+
+---
+
+## Dateline
+
+How long is the flight between the Western most and the Eastern most points in the US?
+
+--
+
+```{r echo=FALSE, fig.align="center", fig.height=4, fig.width=8, warning=FALSE, message=FALSE}
+par(mar=c(3,3,1,1))
+
+ak = st_read("data/ak/states.shp", quiet = TRUE, stringsAsFactors = FALSE)
+ak_geom = st_geometry(ak)
+
+west_hem = st_polygon(list(matrix(c(-180,90, -180,-90, 0,-90, 0,90, -180,90), ncol=2,byrow=TRUE))) %>% 
+  st_sfc() %>%
+  st_set_crs("+proj=longlat +datum=WGS84")
+
+east_hem = st_polygon(list(matrix(c(180,90, 180,-90, 0,-90, 0,90, 180,90), ncol=2,byrow=TRUE))) %>% 
+  st_sfc() %>%
+  st_set_crs("+proj=longlat +datum=WGS84")
+
+ak_west = st_intersection(ak_geom, west_hem)
+ak_east = st_intersection(ak_geom, east_hem)
+
+ak_east_shift = (ak_east - c(360,0)) %>% st_set_crs("+proj=longlat +datum=WGS84")
+
+ak_shift = st_union(ak_east_shift, ak_west)
+
+plot(ak_shift, axes=TRUE, col="black", border=NA, xlim=c(-190, -130))
+points(c(-360+179.776,-179.146), c(51.952,51.273),col='red')
+abline(v=-180,col='blue',lty=2)
+```
+```{r echo=FALSE, fig.align="center", fig.width=8, fig.height=3}
+plot(ak_shift, col="black", border=NA, xlim=c(-190, -170), ylim=c(50, 55))
+points(c(-360+179.776,-179.146), c(51.952,51.273),col='red')
+abline(v=-180,col='blue',lty=2)
+box()
+```
+
+---
+
+## Great circle distance
+
+```{r echo=FALSE, fig.align="center", fig.width=8, fig.height=4}
+par(mar=c(0,0,0,0))
+ak1 = c(179.776,51.952)
+ak2 = c(-179.146,51.273)
+inter = geosphere::gcIntermediate(ak1, ak2, n=50, addStartEnd=TRUE)
+plot(st_geometry(world), col="black", ylim=c(-90,90), axes=TRUE)
+lines(inter,col='red',lwd=2,lty=3)
+```
+
+---
+
+## Even plotting is hard
+
+```{r echo=FALSE, fig.align="center", fig.width=8, fig.height=4, out.width="100%"}
+plot(st_geometry(NAm), graticule=st_crs(NAm), col="black", border=NA, axes=TRUE)
+```
+
+---
+
+## Relationships
+
+<img src="imgs/taal_photo.jpg" width="250" height="250" style="display: block; margin: auto;"/>
+
+
+<img src="imgs/taal_seq.png" width="1000" style="display: block; margin: auto;"/>
+
+
+---
+class: middle
+count: false
+
+# Geospatial Data and R
+
+---
+
+## Simple Features
+
+```{r echo=FALSE}
+pt = st_point(c(30, 10))
+ls = st_linestring(matrix(c(30, 10, 10, 30, 40, 40), byrow=TRUE, ncol=2))
+poly = st_polygon(list(matrix(c(30, 10, 40, 40, 20, 40, 10, 20, 30, 10), ncol=2, byrow=TRUE)))
+poly_hole = st_polygon(
+              list(
+                matrix(c(35, 10, 45, 45, 15, 40, 10, 20, 35, 10), ncol=2, byrow=TRUE),
+                matrix(c(20, 30, 35, 35, 30, 20, 20, 30), ncol=2, byrow=TRUE)
+              )
+            )
+
+pts = st_multipoint(matrix(c(10, 40, 40, 30, 20, 20, 30, 10), ncol=2, byrow=TRUE))
+lss = st_multilinestring(list( 
+        matrix(c(10, 10, 20, 20, 10, 40), ncol=2, byrow=TRUE),
+        matrix(c(40, 40, 30, 30, 40, 20, 30, 10), ncol=2, byrow=TRUE)
+      ))
+polys = st_multipolygon(list(
+          list(matrix(c(30, 20, 45, 40, 10, 40, 30, 20), ncol=2, byrow=TRUE)),
+          list(matrix(c(15, 5, 40, 10, 10, 20, 5, 10, 15, 5), ncol=2, byrow=TRUE))
+        ))
+polys_hole = st_multipolygon(list(
+                list(matrix(c(40, 40, 20, 45, 45, 30, 40, 40), ncol=2, byrow=TRUE)),
+                list(matrix(c(20, 35, 10, 30, 10, 10, 30, 5, 45, 20, 20, 35), ncol=2, byrow=TRUE),
+                     matrix(c(30, 20, 20, 15, 20, 25, 30, 20), ncol=2, byrow=TRUE))
+              ))
+```
+
+```{r echo=FALSE, fig.width=8, fig.height=8, fig.align="center", out.width="100%"}
+par(mar=c(1,1,2,1), mfrow=c(4,4))
+
+plot(pt, axes=FALSE, main="Point", pch=16); box()
+plot(ls, axes=FALSE, main="Linestring");    box()
+plot(poly, axes=FALSE, col="lightgrey", main="Polygon");  box()
+plot(poly_hole, axes=FALSE, col="lightgrey", main="Polygon w/ Hole(s)");  box()
+
+plot(pts, axes=FALSE, main="Multipoint", pch=16); box()
+plot(lss, axes=FALSE, main="Multilinestring");    box()
+plot(polys, axes=FALSE, col="lightgrey", main="Multipolygon");  box()
+plot(polys_hole, axes=FALSE, col="lightgrey", main="Multipolygon w/ Hole(s)");  box()
+```
+
+---
+
+## Analysis of geospatial data in R
+
+R has a rich package ecosystem for read/writing, manipulating, and analyzing geospatial data.
+
+<br/>
+
+Some core packages:
+
+* ~~`sp` - core classes for handling spatial data, additional utility functions.~~
+
+* ~~`rgdal` - R interface to `gdal` (Geospatial Data Abstraction Library) for reading and writing spatial data.~~
+
+* ~~`rgeos` - R interface to `geos` (Geometry Engine Open Source) library for querying and manipulating spatial data. Reading and writing WKT.~~
+
+* `sf` - Combines the functionality of `sp`, `rgdal`, and `rgeos` into a single package based on tidy simple features.
+
+* `raster` - classes and tools for handling spatial raster data.
+
+<br/>
+
+See more - [Spatial task view](http://cran.r-project.org/web/views/Spatial.html)
+
+---
+
+## Installing `sf`
+
+This is the hardest part of using the `sf` package, difficulty comes from is dependence on several external libraries (`geos`, `gdal`, and `proj`).
+
+* *Windows* - installing from source works when Rtools is installed (system requirements are downloaded from rwinlib)
+
+* *MacOS* - install dependencies via homebrew: `gdal2`, `geos`, `proj`.
+
+* *Linux* - Install development pacakages for GDAL (>= 2.0.0), GEOS (>= 3.3.0) and Proj.4 (>= 4.8.0) from your package manager of choice.
+
+
+More specific details are included in the [repo readme on github](https://github.com/r-spatial/sf).
+
+
+---
+
+## Reading, writing, and converting simple features
+
+- `sf`
+    * `st_read` / `st_write` - Shapefile, GeoJSON, KML, ...
+    * `st_as_sfc` / `st_as_wkt` - WKT
+    * `st_as_sfc` / `st_as_binary` - WKB
+    * `st_as_sfc` / `as(x, "Spatial")` - sp
+
+See [sf vignette #2](https://cran.r-project.org/web/packages/sf/vignettes/sf2.html).
+
+---
+
+## Shapefiles
+
+```{r}
+fs::dir_info("data/gis/nc_counties/") %>% select(path:size)
+```
+
+---
+
+## NC Counties
+
+```{r}
+nc  = st_read("data/gis/nc_counties/", quiet=TRUE, stringsAsFactors=FALSE) %>% tbl_df() %>% st_sf()
+
+nc
+```
+
+---
+
+## `sf` classes
+
+.normal[
+```{r}
+str(nc, max.level=1)
+
+class(nc)
+
+class(nc$geometry)
+
+class(nc$geometry[[1]])
+```
+]
+
+---
+
+```{r}
+plot(nc)
+```
+
+---
+
+## Other data
+
+```{r}
+air = st_read("data/gis/airports/", quiet=TRUE, stringsAsFactors=FALSE) %>% tbl_df() %>% st_sf()
+hwy = st_read("data/gis/us_interstates/", quiet=TRUE, stringsAsFactors=FALSE) %>% tbl_df() %>% st_sf()
+```
+
+```{r echo=FALSE}
+par(mar=c(3,3,3,0.1), mfrow=c(1,3))
+plot(st_geometry(nc),  axes=TRUE, main="nc")
+plot(st_geometry(air), axes=TRUE, pch=16, col="blue", main="air")
+plot(st_geometry(hwy), axes=TRUE, col="red", main="hwy")
+```
+
+---
+
+## Projections
+
+```{r}
+st_crs(nc)
+st_crs(air)
+st_crs(hwy)
+```
+
+---
+
+```{r echo=FALSE, fig.align="center", fig.height=4, fig.width=8}
+plot(st_geometry(nc),  axes=TRUE, main="Combined")
+plot(st_geometry(air), add=TRUE, pch=16, col="blue")
+plot(st_geometry(hwy), add=TRUE, col="red")
+```
+
+---
+
+## UTM Zones
+
+<img src="imgs/UTM_Zones.png" width="700" style="display: block; margin: auto;"/>
+
+---
+
+## Lat/Long
+
+```{r}
+nc_ll = nc
+air_ll = air
+hwy_ll = st_transform(hwy, st_crs(nc))
+```
+
+```{r echo=FALSE, fig.align="center", fig.height=4, fig.width=8}
+plot(st_geometry(nc_ll),  axes=TRUE, main="Combined")
+plot(st_geometry(air_ll), add=TRUE, pch=16, col="blue")
+plot(st_geometry(hwy_ll), add=TRUE, col="red")
+```
+
+---
+
+## UTM (Zone 15)
+
+```{r}
+utm17 = "+proj=utm +zone=17 +datum=NAD83 +units=m +no_defs"
+nc_utm = st_transform(nc, st_crs(utm17))
+air_utm = st_transform(air, st_crs(utm17))
+hwy_utm = st_transform(hwy, st_crs(utm17))
+```
+
+```{r echo=FALSE, fig.align="center", fig.height=4, fig.width=8}
+plot(st_geometry(nc_utm),  axes=TRUE, main="Combined")
+plot(st_geometry(air_utm), add=TRUE, pch=16, col="blue")
+plot(st_geometry(hwy_utm), add=TRUE, col="red")
+```
+
+---
+class: middle
+count: false
+
+# Airport Example
+
+---
+
+## Sparse vs Full Results
+
+```{r}
+st_intersects(nc[20:30,], air) %>% str()
+```
+
+---
+
+```{r}
+st_intersects(nc, air, sparse=FALSE) %>% str()
+
+st_intersects(nc, air, sparse=FALSE) %>% .[20:30, 260:270]
+```
+
+---
+
+## Which counties have airports?
+
+```{r}
+nc_air = st_intersects(nc_utm, air_utm)
+has_air = map_lgl(nc_air, ~ length(.) > 0)
+nc %>% slice(which(has_air)) %>% pull(COUNTY)
+```
+
+```{r}
+air_in_nc = nc_air %>% unlist() %>% unique()
+air %>% slice(air_in_nc) %>% pull(AIRPT_NAME)
+```
+ 
+---
+
+```{r fig.align="center"}
+plot(st_geometry(nc))
+plot(st_geometry(nc[has_air,]), add=TRUE, col="lightblue")
+plot(st_geometry(air[air_in_nc,]), add=TRUE, pch=16, col="blue")
+```
+
+---
+class: middle
+count: false
+
+# A Quick Gerrymandering Example
+
+---
+
+## (Fake) Data from Annearundel County, Maryland
+
+```{r fig.align="center"}
+(ac = st_read("data/gis/Annearundel/AnneArundelN.shp", quiet=TRUE) %>% tbl_df() %>% st_sf())
+```
+
+---
+
+```{r fig.align="center"}
+ac %>% select(DISTRICT) %>% plot()
+```
+
+---
+
+## Adjacency matrix of precincts
+
+```{r fig.align="center"}
+adj = st_touches(ac, sparse=FALSE)
+
+corrplot::corrplot(adj,method="color",type="full",tl.col="black",cl.pos = "n")
+```
+
+---
+
+## Creating districts
+
+```{r warning=FALSE, fig.align="center"}
+ac_dists = ac %>% group_by(DISTRICT) %>% summarize(geometry = st_union(geometry))
+plot(ac_dists)
+```
+
+---
+
+## Polsby-Popper
+
+This is a measure of district compactness
+
+$$ PP(d) = 4\pi \frac{ A(d)}{P(d)^2} $$
+
+where $A(d)$ and $P(d)$ are the area and perimeter of the district respectively.
+
+--
+
+```{r fig.align="center"}
+circ = st_length(st_cast(ac_dists,"MULTILINESTRING"))
+area = st_area(ac_dists)
+
+4 * pi * area / circ^2
+```
+
+---
+class: middle
+count: false 
+
+# Highway Example
+
+---
+
+## Highways
+
+.top[
+```{r echo=FALSE, out.width="90%", fig.height=4}
+ggplot() +
+  geom_sf(data=nc_utm) +
+  geom_sf(data=hwy_utm, col='red')
+```
+]
+
+---
+
+## NC Interstate Highways
+
+```{r}
+hwy_nc_utm = st_intersection(hwy_utm, nc_utm)
+```
+
+```{r echo=FALSE, out.width="100%", fig.height=4}
+ggplot() + 
+  geom_sf(data=nc_utm) +
+  geom_sf(data=hwy_nc_utm, col='red')
+```
+
+---
+
+## Counties near the interstate (Buffering)
+
+```{r}
+buffer = hwy_nc_utm %>%
+  st_buffer(10000)
+```
+
+```{r echo=FALSE, out.width="100%", fig.height=4}
+ggplot() + 
+  geom_sf(data=nc_utm) +
+  geom_sf(data=hwy_nc_utm, color='red') +
+  geom_sf(data=buffer, fill='red', alpha=0.3)
+```
+
+---
+
+## Counties near the interstate (Buffering + Union)
+
+```{r}
+buffer = hwy_nc_utm %>%
+  st_buffer(10000) %>%
+  st_union() %>%
+  st_sf()
+```
+
+```{r echo=FALSE, out.width="100%", fig.height=4}
+ggplot() + 
+  geom_sf(data=nc_utm) +
+  geom_sf(data=hwy_nc_utm, color='red') +
+  geom_sf(data=buffer, fill='red', alpha=0.3)
+```
+
+---
+
+## Which counties?
+
+```{r}
+buffer = hwy_nc_utm %>%
+  st_buffer(10000) %>%
+  st_union() %>%
+  st_sf()
+near_counties = st_intersects(nc_utm, buffer) %>%
+  map_lgl(~length(.x) != 0)
+```
+
+```{r echo=FALSE, out.width="100%", fig.height=4}
+ggplot() + 
+  geom_sf(data=nc_utm) +
+  geom_sf(data=nc_utm[near_counties,], fill="lightblue", alpha=0.8) +
+  geom_sf(data=hwy_nc_utm, color='red') +
+  geom_sf(data=buffer, fill='red', alpha=0.3)
+```

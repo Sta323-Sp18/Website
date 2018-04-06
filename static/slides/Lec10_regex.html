@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Regular Expressions</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Colin Rundel" />
+    <meta name="date" content="2018-02-20" />
+    <link href="libs/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Regular Expressions
+### Colin Rundel
+### 2018-02-20
+
+---
+
+exclude: true
+
+
+
+
+```r
+library(stringr)
+```
+
+---
+class: middle
+count: false
+
+# stringr
+
+---
+
+## stringr
+
+stringr is a string handling package written by Hadley Wickham that is designed to improve / simplify string handling in R. Most are wrappers for base R functions. 
+
+.small[
+|                                           |                                     |
+|:------------------------------------------|:------------------------------------|
+|`str_detect(string, pattern)`              | Detect the presence or absence of a pattern in a string. |
+|`str_locate(string, pattern)`              | Locate the first position of a pattern and return a matrix with start and end. |
+|`str_extract(string, pattern)`             | Extracts text corresponding to the first match. |
+|`str_match(string, pattern)`               | Extracts capture groups formed by `()` from the first match. |
+|`str_split(string, pattern)`               | Splits string into pieces and returns a list of character vectors. |
+|`str_replace(string, pattern, replacement)`| Replaces the first matched pattern and returns a character vector. |
+]
+
+&lt;br/&gt;
+
+Many of these functions have variants with an `_all` suffix which will match more than one occurrence of the pattern in a given string.
+
+---
+class: middle
+count: false
+
+# Regular Expressions
+
+---
+
+## Simple Pattern Detection
+
+
+```r
+text = c("The","quick","brown","fox","jumps","over","the","lazy","dog")
+```
+
+--
+
+
+```r
+str_detect(text, "quick")
+```
+
+```
+## [1] FALSE  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+```
+
+--
+
+
+```r
+str_detect(text, "o")
+```
+
+```
+## [1] FALSE FALSE  TRUE  TRUE FALSE  TRUE FALSE FALSE  TRUE
+```
+
+--
+
+
+```r
+str_detect(text, "row")
+```
+
+```
+## [1] FALSE FALSE  TRUE FALSE FALSE FALSE FALSE FALSE FALSE
+```
+
+---
+
+## Aside - Escape Characters 
+
+An escape character is a character which results in an alternative interpretation of the following character(s). These vary from language to language but for most string implementations `\` will be the escape character which is then modified by a single subsequent character.
+
+Some common examples:
+
+|    |                  |
+|----|------------------|
+|`\'`| single quote     |
+|`\"`| double quote     |
+|`\\`| backslash        |
+|`\n`| new line         |
+|`\r`| carriage return  |
+|`\t`| tab              |
+|`\b`| backspace        |
+|`\f`| form feed        |
+
+---
+
+## Examples
+
+.pull-left[
+
+```r
+print("a\"b")
+```
+
+```
+## [1] "a\"b"
+```
+
+```r
+print("a\tb")
+```
+
+```
+## [1] "a\tb"
+```
+
+```r
+print("a\nb")
+```
+
+```
+## [1] "a\nb"
+```
+
+```r
+print("a\\b")
+```
+
+```
+## [1] "a\\b"
+```
+]
+
+.pull-right[
+
+```r
+cat("a\"b")
+```
+
+```
+## a"b
+```
+
+```r
+cat("a\tb")
+```
+
+```
+## a	b
+```
+
+```r
+cat("a\nb")
+```
+
+```
+## a
+## b
+```
+
+```r
+cat("a\\b")
+```
+
+```
+## a\b
+```
+]
+
+---
+
+## RegEx Metacharacters
+
+The power of regular expressions comes from the ability to use a number of special metacharacters that modify how pattern matching is performed.
+
+```regex
+. ^ $ * + ? { } [ ] \ | ( )
+```
+
+--
+
+Because of their special properties they cannot be matched directly, if you need to match one you need to escape it first (precede it by `\`). The problem is that regex escapes live on top of regular string escapes, so there needs to be *two* levels of escapes.
+
+&lt;br/&gt;
+
+--
+
+| Pattern | Regex Pattern | String Literal |
+|---------|-------|-----------|
+| `.`     | `\.`  | `"\\."`   |
+| `?`     | `\?`  | `"\\?"`   |
+| `!`     | `\!`  | `"\\!"`   |
+
+
+---
+
+## Example
+
+
+```r
+str_detect("abc[def","\[")
+```
+
+```
+## Error: '\[' is an unrecognized escape in character string starting ""\["
+```
+
+
+```r
+str_detect("abc[def","\\[")
+```
+
+```
+## [1] TRUE
+```
+
+--
+
+How do we detect if a string contains a `\` character?
+
+--
+
+
+```r
+cat("abc\\def\n")
+```
+
+```
+## abc\def
+```
+
+```r
+str_detect("abc\\def","\\\\")
+```
+
+```
+## [1] TRUE
+```
+
+---
+
+## XKCD's take
+
+
+
+&lt;img src="imgs/xkcd_backslashes.png" width="1523" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## Anchors
+
+Sometimes we want to specify that our pattern occurs at a particular location in a string, we indicate this using anchor metacharacters.
+
+|      |    |
+|------|:---|
+| `^` or `\A` | Start of string   |
+| `$` or `\Z` | End of string     |
+| `\b`        | Word boundary     |  
+| `\B`        | Not word boundary |
+
+---
+
+## Anchor Examples
+
+
+```r
+text = "the quick brown fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace(text,"^the","---")
+```
+
+```
+## [1] "--- quick brown fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace(text,"^dog","---")
+```
+
+```
+## [1] "the quick brown fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace(text,"the$","---")
+```
+
+```
+## [1] "the quick brown fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace(text,"dog$","---")
+```
+
+```
+## [1] "the quick brown fox jumps over the lazy ---"
+```
+
+
+---
+
+## Anchor Examples
+
+
+```r
+text = "the quick brown fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace_all(text,"\\Brow\\B","---")
+```
+
+```
+## [1] "the quick b---n fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace_all(text,"\\brow\\b","---")
+```
+
+```
+## [1] "the quick brown fox jumps over the lazy dog"
+```
+
+--
+
+
+```r
+str_replace_all(text,"\\bthe","---")
+```
+
+```
+## [1] "--- quick brown fox jumps over --- lazy dog"
+```
+
+--
+
+
+```r
+str_replace_all(text,"the\\b","---")
+```
+
+```
+## [1] "--- quick brown fox jumps over --- lazy dog"
+```
+
+
+
+---
+
+## More complex patterns
+
+If there are more than one pattern we would like to match we can use the or (`|`) metacharacter.
+
+--
+
+
+```r
+str_replace_all(text,"the|dog","---")
+```
+
+```
+## [1] "--- quick brown fox jumps over --- lazy ---"
+```
+
+--
+
+
+```r
+str_replace_all(text,"the|row","---")
+```
+
+```
+## [1] "--- quick b---n fox jumps over --- lazy dog"
+```
+
+--
+
+
+```r
+str_replace_all(text,"a|e|i|o|u","-")
+```
+
+```
+## [1] "th- q--ck br-wn f-x j-mps -v-r th- l-zy d-g"
+```
+
+--
+
+
+```r
+str_replace_all(text,"\\ba|e|i|o|u","-")
+```
+
+```
+## [1] "th- q--ck br-wn f-x j-mps -v-r th- lazy d-g"
+```
+
+--
+
+
+```r
+str_replace_all(text,"\\b(a|e|i|o|u)","-")
+```
+
+```
+## [1] "the quick brown fox jumps -ver the lazy dog"
+```
+
+
+
+---
+
+## Character Classes
+
+When we want to match whole classes of characters at a time there are a number of convenience patterns built in,
+
+| Meta character | Class | Description |
+|------|-------------|:-|
+| `.`  |             | Any character except new line (`\n`) | 
+| `\s` | `[:space:]` | White space |
+| `\S` |             | Not white space |
+| `\d` | `[:digit:]` | Digit (0-9)|
+| `\D` |             | Not digit |
+| `\w` |             | Word (A-Z, a-z, 0-9, or _) |
+| `\W` |             | Not word |
+|      | `[:punct:]` | Punctionation |
+
+---
+
+## A hierarchical view
+
+&lt;center&gt;
+  &lt;img src="imgs/regex_char_classes.png" width=450&gt;
+&lt;/center&gt;
+
+From http://perso.ens-lyon.fr/lise.vaudor/strings-et-expressions-regulieres/
+
+---
+
+## Example
+
+How would we write a regular expression to match a telephone number with the form `(###) ###-####`?
+
+
+```r
+text = c("apple", "(219) 733-8965", "(329) 293-8753")
+```
+
+--
+
+
+```r
+str_detect(text, "(\d\d\d) \d\d\d-\d\d\d\d")
+```
+
+```
+## Error: '\d' is an unrecognized escape in character string starting ""(\d"
+```
+
+--
+
+
+```r
+str_detect(text, "(\\d\\d\\d) \\d\\d\\d-\\d\\d\\d\\d")
+```
+
+```
+## [1] FALSE FALSE FALSE
+```
+
+--
+
+
+```r
+str_detect(text, "\\(\\d\\d\\d\\) \\d\\d\\d-\\d\\d\\d\\d")
+```
+
+```
+## [1] FALSE  TRUE  TRUE
+```
+
+
+---
+
+## Classes and Ranges
+
+We can also specify our own classes using the square bracket meta character
+
+|          | |
+|----------|-|
+| `[abc]`  | Class (a or b or c) |
+| `[^abc]` | Negated class (not a or b or c) |
+| `[a-c]`  | Range lower case letter from a to c |
+| `[A-C]`  | Range upper case letter from A to C |
+| `[0-7]`  | Digit from 0 to 7 |
+
+---
+
+## Example
+
+
+```r
+text = c("apple", "(219) 733-8965", "(329) 293-8753")
+```
+
+--
+
+
+```r
+str_replace_all(text, "[aeiou]", "&amp;")
+```
+
+```
+## [1] "&amp;ppl&amp;"          "(219) 733-8965" "(329) 293-8753"
+```
+
+--
+
+
+```r
+str_replace_all(text, "[13579]", "*")
+```
+
+```
+## [1] "apple"          "(2**) ***-8*6*" "(*2*) 2**-8***"
+```
+
+--
+
+
+```r
+str_replace_all(text, "[1-5a-ep]", "^")
+```
+
+```
+## [1] "^^^l^"          "(^^9) 7^^-896^" "(^^9) ^9^-87^^"
+```
+
+---
+
+## Exercises 1
+
+For the following vector of randomly generated names, write a regular expression that,
+
+* detects if the person's first name starts with a vowel (a,e,i,o,u)
+
+* detects if the person's last name starts with a vowel
+
+* detects if either the person's first or last name start with a vowel
+
+* detects if neither the person's first nor last name start with a vowel
+
+
+
+```
+c("Haven Giron", "Newton Domingo", "Kyana Morales", "Andre Brooks", 
+"Jarvez Wilson", "Mario Kessenich", "Sahla al-Radi", "Trong Brown", 
+"Sydney Bauer", "Kaleb Bradley", "Morgan Hansen", "Abigail Cho", 
+"Destiny Stuckey", "Hafsa al-Hashmi", "Condeladio Owens", "Annnees el-Bahri", 
+"Megan La", "Naseema el-Siddiqi", "Luisa Billie", "Anthony Nguyen"
+)
+```
+
+
+---
+
+## Quantifiers
+
+Attached to literals or character classes these allow a match to repeat some number of time.
+
+|         | |
+|---------|:-|
+| `*`     | Match 0 or more |
+| `+`     | Match 1 or more |
+| `?`     | Match 0 or 1 |
+| `{3}`   | Match Exactly 3 |
+| `{3,}`  | Match 3 or more |
+| `{3,5}` | Match 3, 4 or 5 |
+
+---
+
+## Example
+
+How would we improve our previous regular expression for matching a telephone number with the form `(###) ###-####`?
+
+
+```r
+text = c("apple", "(219) 733-8965", "(329) 293-8753")
+```
+
+--
+
+
+```r
+str_detect(text, "\\(\\d\\d\\d\\) \\d\\d\\d-\\d\\d\\d\\d")
+```
+
+```
+## [1] FALSE  TRUE  TRUE
+```
+
+--
+
+
+```r
+str_detect(text, "\\(\\d{3}\\) \\d{3}-\\d{4}")
+```
+
+```
+## [1] FALSE  TRUE  TRUE
+```
+
+---
+
+## Greedy vs ungreedy matching
+
+What went wrong here?
+
+
+```r
+text = "&lt;div class='main'&gt; &lt;div&gt; &lt;a href='here.pdf'&gt;Here!&lt;/a&gt; &lt;/div&gt; &lt;/div&gt;"
+```
+
+
+```r
+str_extract(text, "&lt;div&gt;.*&lt;/div&gt;")
+```
+
+```
+## [1] "&lt;div&gt; &lt;a href='here.pdf'&gt;Here!&lt;/a&gt; &lt;/div&gt; &lt;/div&gt;"
+```
+
+&lt;br/&gt;
+
+--
+
+If you add `?` after a quantifier, the matching will be *non-greedy* (find the shortest possible match, not the longest). 
+
+
+```r
+str_extract(text, "&lt;div&gt;.*?&lt;/div&gt;")
+```
+
+```
+## [1] "&lt;div&gt; &lt;a href='here.pdf'&gt;Here!&lt;/a&gt; &lt;/div&gt;"
+```
+
+---
+
+## Groups
+
+Groups all you to connect together parts of a regular expression for modification or capture.
+
+|           | |
+|-----------|:-|
+| (a &amp;vert; b)   | match literal "a" or "b", group either |
+| `a(bc)?`  | match "a" or "abc", group bc or nothing |
+| `(abc)def(hig)` | match "abcdefhig", group abc and hig |
+| `(?:abc)` | match "abc", non-capturing group | 
+
+---
+
+## Example
+
+
+```r
+text = c("Bob Smith", "Alice Smith", "Apple")
+```
+
+--
+
+
+```r
+str_extract(text, "^[:alpha:]+")
+```
+
+```
+## [1] "Bob"   "Alice" "Apple"
+```
+
+--
+
+
+```r
+str_match(text, "^([:alpha:]+) [:alpha:]+")
+```
+
+```
+##      [,1]          [,2]   
+## [1,] "Bob Smith"   "Bob"  
+## [2,] "Alice Smith" "Alice"
+## [3,] NA            NA
+```
+
+--
+
+
+```r
+str_match(text, "^([:alpha:]+) ([:alpha:]+)")
+```
+
+```
+##      [,1]          [,2]    [,3]   
+## [1,] "Bob Smith"   "Bob"   "Smith"
+## [2,] "Alice Smith" "Alice" "Smith"
+## [3,] NA            NA      NA
+```
+
+
+
+
+---
+
+## How not to use a RegEx
+
+Validating an email address:
+
+.small[
+```
+(?:[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+)*|"(?:
+ [\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")
+@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[
+(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*
+[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])
+```
+]
+
+---
+
+## Exercise 2
+
+
+```r
+text = c("apple", "219 733 8965", "329-293-8753", "Work: (579) 499-7527; Home: (543) 355 3679")
+```
+
+* Write a regular expression that will extract *all* phone numbers contained in the vector above.
+
+
+* Once that works use groups to extracts the area code separately from the rest of the phone number.
+
+---
+
+# Acknowledgments
+
+---
+
+## Acknowledgments
+
+* Hadley Wickham - [stringr vigneete](https://cran.r-project.org/web/packages/stringr/vignettes/stringr.html)
+
+* David Child - [RegEx Cheat Sheet](http://www.cheatography.com/davechild/cheat-sheets/regular-expressions/)
+
+* [Regular-Expression.info](http://www.regular-expressions.info/)
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+  }
+});
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

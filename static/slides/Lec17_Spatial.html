@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Spatial data</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Colin Rundel" />
+    <meta name="date" content="2018-04-03" />
+    <link href="libs/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Spatial data
+### Colin Rundel
+### 2018-04-03
+
+---
+
+exclude: true
+
+
+
+
+---
+class: middle
+count: false
+
+# Geospatial stuff is hard
+
+---
+
+## Projections
+
+
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-2-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Dateline
+
+How long is the flight between the Western most and the Eastern most points in the US?
+
+--
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-3-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Great circle distance
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-5-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Even plotting is hard
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-6-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Relationships
+
+&lt;img src="imgs/taal_photo.jpg" width="250" height="250" style="display: block; margin: auto;"/&gt;
+
+
+&lt;img src="imgs/taal_seq.png" width="1000" style="display: block; margin: auto;"/&gt;
+
+
+---
+class: middle
+count: false
+
+# Geospatial Data and R
+
+---
+
+## Simple Features
+
+
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-8-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Analysis of geospatial data in R
+
+R has a rich package ecosystem for read/writing, manipulating, and analyzing geospatial data.
+
+&lt;br/&gt;
+
+Some core packages:
+
+* ~~`sp` - core classes for handling spatial data, additional utility functions.~~
+
+* ~~`rgdal` - R interface to `gdal` (Geospatial Data Abstraction Library) for reading and writing spatial data.~~
+
+* ~~`rgeos` - R interface to `geos` (Geometry Engine Open Source) library for querying and manipulating spatial data. Reading and writing WKT.~~
+
+* `sf` - Combines the functionality of `sp`, `rgdal`, and `rgeos` into a single package based on tidy simple features.
+
+* `raster` - classes and tools for handling spatial raster data.
+
+&lt;br/&gt;
+
+See more - [Spatial task view](http://cran.r-project.org/web/views/Spatial.html)
+
+---
+
+## Installing `sf`
+
+This is the hardest part of using the `sf` package, difficulty comes from is dependence on several external libraries (`geos`, `gdal`, and `proj`).
+
+* *Windows* - installing from source works when Rtools is installed (system requirements are downloaded from rwinlib)
+
+* *MacOS* - install dependencies via homebrew: `gdal2`, `geos`, `proj`.
+
+* *Linux* - Install development pacakages for GDAL (&gt;= 2.0.0), GEOS (&gt;= 3.3.0) and Proj.4 (&gt;= 4.8.0) from your package manager of choice.
+
+
+More specific details are included in the [repo readme on github](https://github.com/r-spatial/sf).
+
+
+---
+
+## Reading, writing, and converting simple features
+
+- `sf`
+    * `st_read` / `st_write` - Shapefile, GeoJSON, KML, ...
+    * `st_as_sfc` / `st_as_wkt` - WKT
+    * `st_as_sfc` / `st_as_binary` - WKB
+    * `st_as_sfc` / `as(x, "Spatial")` - sp
+
+See [sf vignette #2](https://cran.r-project.org/web/packages/sf/vignettes/sf2.html).
+
+---
+
+## Shapefiles
+
+
+```r
+fs::dir_info("data/gis/nc_counties/") %&gt;% select(path:size)
+```
+
+```
+## # A tibble: 4 x 3
+##   path                                 type         size
+##   &lt;fs::path&gt;                           &lt;fct&gt; &lt;fs::bytes&gt;
+## 1 data/gis/nc_counties/nc_counties.dbf file          41K
+## 2 data/gis/nc_counties/nc_counties.prj file          165
+## 3 data/gis/nc_counties/nc_counties.shp file        1.41M
+## 4 data/gis/nc_counties/nc_counties.shx file          900
+```
+
+---
+
+## NC Counties
+
+
+```r
+nc  = st_read("data/gis/nc_counties/", quiet=TRUE, stringsAsFactors=FALSE) %&gt;% tbl_df() %&gt;% st_sf()
+
+nc
+```
+
+```
+## Simple feature collection with 100 features and 8 fields
+## geometry type:  MULTIPOLYGON
+## dimension:      XY
+## bbox:           xmin: -84.32186 ymin: 33.84175 xmax: -75.46003 ymax: 36.58815
+## epsg (SRID):    4269
+## proj4string:    +proj=longlat +datum=NAD83 +no_defs
+## # A tibble: 100 x 9
+##      AREA PERIMETER COUNTYP010 STATE COUNTY         FIPS  STATE_FIPS SQUARE_MIL
+##     &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt;           &lt;dbl&gt;
+##  1 0.112       1.61      1994. NC    Ashe County    37009 37               429.
+##  2 0.0616      1.35      1996. NC    Alleghany Cou… 37005 37               236.
+##  3 0.140       1.77      1998. NC    Surry County   37171 37               539.
+##  4 0.0891      1.43      1999. NC    Gates County   37073 37               342.
+##  5 0.0687      4.43      2000. NC    Currituck Cou… 37053 37               264.
+##  6 0.119       1.40      2001. NC    Stokes County  37169 37               456.
+##  7 0.0626      2.11      2002. NC    Camden County  37029 37               241.
+##  8 0.115       1.46      2003. NC    Warren County  37185 37               444.
+##  9 0.143       2.40      2004. NC    Northampton C… 37131 37               551.
+## 10 0.0925      1.81      2005. NC    Hertford Coun… 37091 37               356.
+## # ... with 90 more rows, and 1 more variable: geometry &lt;MULTIPOLYGON [°]&gt;
+```
+
+---
+
+## `sf` classes
+
+.normal[
+
+```r
+str(nc, max.level=1)
+```
+
+```
+## Classes 'sf', 'tbl_df', 'tbl' and 'data.frame':	100 obs. of  9 variables:
+##  $ AREA      : num  0.1118 0.0616 0.1402 0.0891 0.0687 ...
+##  $ PERIMETER : num  1.61 1.35 1.77 1.43 4.43 ...
+##  $ COUNTYP010: num  1994 1996 1998 1999 2000 ...
+##  $ STATE     : chr  "NC" "NC" "NC" "NC" ...
+##  $ COUNTY    : chr  "Ashe County" "Alleghany County" "Surry County" "Gates County" ...
+##  $ FIPS      : chr  "37009" "37005" "37171" "37073" ...
+##  $ STATE_FIPS: chr  "37" "37" "37" "37" ...
+##  $ SQUARE_MIL: num  429 236 539 342 264 ...
+##  $ geometry  :sfc_MULTIPOLYGON of length 100; first list element: List of 1
+##   ..- attr(*, "class")= chr  "XY" "MULTIPOLYGON" "sfg"
+##  - attr(*, "sf_column")= chr "geometry"
+##  - attr(*, "agr")= Factor w/ 3 levels "constant","aggregate",..: NA NA NA NA NA NA NA NA
+##   ..- attr(*, "names")= chr  "AREA" "PERIMETER" "COUNTYP010" "STATE" ...
+```
+
+```r
+class(nc)
+```
+
+```
+## [1] "sf"         "tbl_df"     "tbl"        "data.frame"
+```
+
+```r
+class(nc$geometry)
+```
+
+```
+## [1] "sfc_MULTIPOLYGON" "sfc"
+```
+
+```r
+class(nc$geometry[[1]])
+```
+
+```
+## [1] "XY"           "MULTIPOLYGON" "sfg"
+```
+]
+
+---
+
+
+```r
+plot(nc)
+```
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-12-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Other data
+
+
+```r
+air = st_read("data/gis/airports/", quiet=TRUE, stringsAsFactors=FALSE) %&gt;% tbl_df() %&gt;% st_sf()
+hwy = st_read("data/gis/us_interstates/", quiet=TRUE, stringsAsFactors=FALSE) %&gt;% tbl_df() %&gt;% st_sf()
+```
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-14-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Projections
+
+
+```r
+st_crs(nc)
+```
+
+```
+## Coordinate Reference System:
+##   EPSG: 4269 
+##   proj4string: "+proj=longlat +datum=NAD83 +no_defs"
+```
+
+```r
+st_crs(air)
+```
+
+```
+## Coordinate Reference System:
+##   EPSG: 4269 
+##   proj4string: "+proj=longlat +datum=NAD83 +no_defs"
+```
+
+```r
+st_crs(hwy)
+```
+
+```
+## Coordinate Reference System:
+##   EPSG: 26915 
+##   proj4string: "+proj=utm +zone=15 +datum=NAD83 +units=m +no_defs"
+```
+
+---
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-16-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+## UTM Zones
+
+&lt;img src="imgs/UTM_Zones.png" width="700" style="display: block; margin: auto;"/&gt;
+
+---
+
+## Lat/Long
+
+
+```r
+nc_ll = nc
+air_ll = air
+hwy_ll = st_transform(hwy, st_crs(nc))
+```
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-18-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+## UTM (Zone 15)
+
+
+```r
+utm17 = "+proj=utm +zone=17 +datum=NAD83 +units=m +no_defs"
+nc_utm = st_transform(nc, st_crs(utm17))
+air_utm = st_transform(air, st_crs(utm17))
+hwy_utm = st_transform(hwy, st_crs(utm17))
+```
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-20-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+class: middle
+count: false
+
+# Airport Example
+
+---
+
+## Sparse vs Full Results
+
+
+```r
+st_intersects(nc[20:30,], air) %&gt;% str()
+```
+
+```
+## although coordinates are longitude/latitude, st_intersects assumes that they are planar
+```
+
+```
+## List of 11
+##  $ : int(0) 
+##  $ : int(0) 
+##  $ : int(0) 
+##  $ : int(0) 
+##  $ : int(0) 
+##  $ : int 268
+##  $ : int 717
+##  $ : int(0) 
+##  $ : int(0) 
+##  $ : int(0) 
+##  $ : int(0) 
+##  - attr(*, "predicate")= chr "intersects"
+##  - attr(*, "region.id")= chr [1:11] "1" "2" "3" "4" ...
+##  - attr(*, "ncol")= int 940
+##  - attr(*, "class")= chr "sgbp"
+```
+
+---
+
+
+```r
+st_intersects(nc, air, sparse=FALSE) %&gt;% str()
+```
+
+```
+## although coordinates are longitude/latitude, st_intersects assumes that they are planar
+```
+
+```
+##  logi [1:100, 1:940] FALSE FALSE FALSE FALSE FALSE FALSE ...
+```
+
+```r
+st_intersects(nc, air, sparse=FALSE) %&gt;% .[20:30, 260:270]
+```
+
+```
+## although coordinates are longitude/latitude, st_intersects assumes that they are planar
+```
+
+```
+##        [,1]  [,2]  [,3]  [,4]  [,5]  [,6]  [,7]  [,8]  [,9] [,10] [,11]
+##  [1,] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+##  [2,] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+##  [3,] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+##  [4,] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+##  [5,] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+##  [6,] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE  TRUE FALSE FALSE
+##  [7,] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+##  [8,] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+##  [9,] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+## [10,] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+## [11,] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+```
+
+---
+
+## Which counties have airports?
+
+
+```r
+nc_air = st_intersects(nc_utm, air_utm)
+has_air = map_lgl(nc_air, ~ length(.) &gt; 0)
+nc %&gt;% slice(which(has_air)) %&gt;% pull(COUNTY)
+```
+
+```
+##  [1] "Forsyth County"     "Guilford County"    "Dare County"        "Wake County"       
+##  [5] "Pitt County"        "Catawba County"     "Buncombe County"    "Wayne County"      
+##  [9] "Mecklenburg County" "Moore County"       "Cabarrus County"    "Lenoir County"     
+## [13] "Craven County"      "Cumberland County"  "Onslow County"      "New Hanover County"
+```
+
+
+```r
+air_in_nc = nc_air %&gt;% unlist() %&gt;% unique()
+air %&gt;% slice(air_in_nc) %&gt;% pull(AIRPT_NAME)
+```
+
+```
+##  [1] "SMITH REYNOLDS AIRPORT"                                  
+##  [2] "PIEDMONT TRIAD INTERNATIONAL AIRPORT"                    
+##  [3] "DARE COUNTY REGIONAL AIRPORT"                            
+##  [4] "RALEIGH-DURHAM INTERNATIONAL AIRPORT"                    
+##  [5] "PITT-GREENVILLE AIRPORT"                                 
+##  [6] "HICKORY REGIONAL AIRPORT"                                
+##  [7] "ASHEVILLE REGIONAL AIRPORT"                              
+##  [8] "SEYMOUR JOHNSON AIR FORCE BASE"                          
+##  [9] "CHARLOTTE/DOUGLAS INTERNATIONAL AIRPORT"                 
+## [10] "MOORE COUNTY AIRPORT"                                    
+## [11] "CONCORD REGIONAL AIRPORT"                                
+## [12] "KINSTON REGIONAL JETPORT AT STALLINGS FIELD"             
+## [13] "CHERRY POINT MARINE CORPS AIR STATION /CUNNINGHAM FIELD/"
+## [14] "COASTAL CAROLINA REGIONAL AIRPORT"                       
+## [15] "POPE AIR FORCE BASE"                                     
+## [16] "FAYETTEVILLE REGIONAL/GRANNIS FIELD"                     
+## [17] "ALBERT J ELLIS AIRPORT"                                  
+## [18] "WILMINGTON INTERNATIONAL AIRPORT"
+```
+ 
+---
+
+
+```r
+plot(st_geometry(nc))
+plot(st_geometry(nc[has_air,]), add=TRUE, col="lightblue")
+plot(st_geometry(air[air_in_nc,]), add=TRUE, pch=16, col="blue")
+```
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-25-1.png" style="display: block; margin: auto;" /&gt;
+
+# A Quick Gerrymandering Example
+
+---
+
+## (Fake) Data from Annearundel County, Maryland
+
+
+```r
+(ac = st_read("data/gis/Annearundel/AnneArundelN.shp", quiet=TRUE) %&gt;% tbl_df() %&gt;% st_sf())
+```
+
+```
+## Simple feature collection with 56 features and 7 fields
+## geometry type:  MULTIPOLYGON
+## dimension:      XY
+## bbox:           xmin: 413828 ymin: 146220 xmax: 441950.6 ymax: 174397.2
+## epsg (SRID):    NA
+## proj4string:    +proj=lcc +lat_1=38.3 +lat_2=39.45 +lat_0=37.66666666666666 +lon_0=-77 +x_0=400000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
+## # A tibble: 56 x 8
+##    E2014_R E2014_D E2016_R E2016_D Population       id DISTRICT
+##      &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt;      &lt;int&gt;    &lt;dbl&gt;    &lt;int&gt;
+##  1      48      52      64      36       6122 3702100.        3
+##  2      65      35      57      43       9154 3702201.        2
+##  3      44      56      58      42      15458 3702202.        3
+##  4      55      45      65      35       2424 3702203.        3
+##  5      48      52      44      56        430 3702800.        3
+##  6      42      58      49      51       4918 3730203.        5
+##  7      62      38      52      48       5486 3730204.        5
+##  8      48      52      46      54       3093 3730300.        5
+##  9      40      60      39      61       4137 3730401.        6
+## 10      35      65      56      44       5843 3730402.        6
+## # ... with 46 more rows, and 1 more variable: geometry &lt;MULTIPOLYGON [m]&gt;
+```
+
+---
+
+
+```r
+ac %&gt;% select(DISTRICT) %&gt;% plot()
+```
+
+```
+## Warning in classInt::classIntervals(na.omit(values), min(nbreaks, n.unq), : n same as number of
+## different finite values\neach different finite value is a separate class
+```
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-27-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Adjacency matrix of precincts
+
+
+```r
+adj = st_touches(ac, sparse=FALSE)
+
+corrplot::corrplot(adj,method="color",type="full",tl.col="black",cl.pos = "n")
+```
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-28-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Creating districts
+
+
+```r
+ac_dists = ac %&gt;% group_by(DISTRICT) %&gt;% summarize(geometry = st_union(geometry))
+plot(ac_dists)
+```
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-29-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Polsby-Popper
+
+This is a measure of district compactness
+
+$$ PP(d) = 4\pi \frac{ A(d)}{P(d)^2} $$
+
+where `\(A(d)\)` and `\(P(d)\)` are the area and perimeter of the district respectively.
+
+--
+
+
+```r
+circ = st_length(st_cast(ac_dists,"MULTILINESTRING"))
+area = st_area(ac_dists)
+
+4 * pi * area / circ^2
+```
+
+```
+## Units: 1
+## [1] 0.1578816 0.1465205 0.2948130 0.1177227 0.1422566 0.3782004 0.1953110 0.2524293
+```
+
+---
+class: middle
+count: false 
+
+# Highway Example
+
+---
+
+## Highways
+
+.top[
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-31-1.png" width="90%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+## NC Interstate Highways
+
+
+```r
+hwy_nc_utm = st_intersection(hwy_utm, nc_utm)
+```
+
+```
+## Warning: attribute variables are assumed to be spatially constant throughout all geometries
+```
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-33-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Counties near the interstate (Buffering)
+
+
+```r
+buffer = hwy_nc_utm %&gt;%
+  st_buffer(10000)
+```
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-35-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Counties near the interstate (Buffering + Union)
+
+
+```r
+buffer = hwy_nc_utm %&gt;%
+  st_buffer(10000) %&gt;%
+  st_union() %&gt;%
+  st_sf()
+```
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-37-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Which counties?
+
+
+```r
+buffer = hwy_nc_utm %&gt;%
+  st_buffer(10000) %&gt;%
+  st_union() %&gt;%
+  st_sf()
+near_counties = st_intersects(nc_utm, buffer) %&gt;%
+  map_lgl(~length(.x) != 0)
+```
+
+&lt;img src="Lec17_Spatial_files/figure-html/unnamed-chunk-39-1.png" width="100%" style="display: block; margin: auto;" /&gt;
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+  }
+});
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

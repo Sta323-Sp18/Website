@@ -1,0 +1,188 @@
+---
+title: Web APIs
+author: "Colin Rundel"
+date: "2018-03-08"
+output:
+  xaringan::moon_reader:
+    css: "slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+exclude: true
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+options(
+  htmltools.dir.version = FALSE, # for blogdown
+  width = 80,
+  tibble.width = 80
+)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+htmltools::tagList(rmarkdown::html_dependency_font_awesome())
+```
+
+```{r setup, echo=FALSE}
+
+```
+
+---
+class: middle
+count: false
+
+# Web APIs
+
+---
+
+## URLs
+
+```{r echo=FALSE}
+knitr::include_graphics("imgs/url-structure.png")
+```
+
+.footnote[ From [HTTP: The Protocol Every Web Developer Must Know](http://code.tutsplus.com/tutorials/http-the-protocol-every-web-developer-must-know-part-1--net-31177) ]
+
+---
+
+## Query Strings
+
+Provides named parameter(s) and value(s) that modify the behavior of the resulting page. Format generally follows
+
+```
+field1=value1&field2=value2&field3=value3
+```
+
+--
+
+<br/>
+
+Some quick examples,
+
+* `http://lmgtfy.com/?q=hello world`
+
+* `http://maps.googleapis.com/maps/api/geocode/json?sensor=false&address=1600+Amphitheatre+Parkway,+Mountain+View,+CA`
+
+
+---
+
+## URL encoding
+
+This is will often be handled automatically by your web browser or other tool, but it is useful to know a bit about what is happening
+
+* Spaces will encoded as '+' or '%20'
+
+* Certain characters are reserved and will be replaced with the percent-encoded version within a URL
+
+|     |     |     |     |     |     |     |
+|-----|-----|-----|-----|-----|-----|-----|
+| !   | #   | $   | &   | '   | (   | )   |
+| %21 | %23 | %24 | %26 | %27 | %28 | %29 |
+| *   | +   | ,   | /   | :   | ;   | =   |
+| %2A | %2B | %2C | %2F | %3A | %3B | %3D |
+| ?   | @   | [   | ]   |
+| %3F | %40 | %5B | %5D |
+
+* Characters that cannot be converted to the correct charset are replaced with HTML numeric character references (e.g. a &#931; would be encoded as &amp;#931; )
+
+---
+
+```{r}
+URLencode("http://lmgtfy.com/?q=hello world")
+URLdecode(URLencode("http://lmgtfy.com/?q=hello world"))
+```
+
+--
+
+```{r}
+URLencode("! # $ & ' ( ) * + , / : ; = ? @ [ ]")
+URLdecode(URLencode("! # $ & ' ( ) *  + , / : ; = ? @ [ ]"))
+```
+
+--
+
+```{r}
+URLencode("Σ")
+URLdecode(URLencode("Σ"))
+```
+
+
+---
+class: middle
+count: false
+
+# RESTful APIs
+
+---
+
+## REST
+
+**Re**presentational **s**tate **t**ransfer 
+
+* describes an architectural style for web services (not a standard)
+
+* all communication via http requests
+
+* Key features: 
+    - addressible
+    - stateless
+    - connected 
+    - simple
+
+---
+
+## HTTP Methods / Verbs
+
+* *GET* - fetch a resource.
+
+* *POST* - create a new resource.
+
+* *PUT* - update a resource.
+
+* *DELETE* - delete a resource.
+
+Less common verbs: *HEAD*, *TRACE*, *OPTIONS*.
+
+.footnote[ Based on [HTTP: The Protocol Every Web Developer Must Know](http://code.tutsplus.com/tutorials/http-the-protocol-every-web-developer-must-know-part-1--net-31177) ]
+
+---
+
+## Status Codes
+
+* 1xx: Informational Messages
+
+* 2xx: Successful
+
+* 3xx: Redirection
+
+* 4xx: Client Error
+
+* 5xx: Server Error
+
+---
+class: middle
+
+## restcountries.eu
+
+---
+
+## Exercise 1
+
+Using the restcountries.eu API answer the following questions:
+
+1. How many countries are in this data set?
+
+2. Which countries are members of ASEAN (Association of Southeast Asian Nations)?
+
+3. What are all of the currencies used in the Americas?
+
+---
+class: middle
+
+## Github API Demo & `httr`
+
+

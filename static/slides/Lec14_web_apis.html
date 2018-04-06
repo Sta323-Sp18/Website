@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Web APIs</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Colin Rundel" />
+    <meta name="date" content="2018-03-08" />
+    <link href="libs/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Web APIs
+### Colin Rundel
+### 2018-03-08
+
+---
+
+exclude: true
+
+
+
+
+
+---
+class: middle
+count: false
+
+# Web APIs
+
+---
+
+## URLs
+
+&lt;img src="imgs/url-structure.png" width="943" style="display: block; margin: auto;" /&gt;
+
+.footnote[ From [HTTP: The Protocol Every Web Developer Must Know](http://code.tutsplus.com/tutorials/http-the-protocol-every-web-developer-must-know-part-1--net-31177) ]
+
+---
+
+## Query Strings
+
+Provides named parameter(s) and value(s) that modify the behavior of the resulting page. Format generally follows
+
+```
+field1=value1&amp;field2=value2&amp;field3=value3
+```
+
+--
+
+&lt;br/&gt;
+
+Some quick examples,
+
+* `http://lmgtfy.com/?q=hello world`
+
+* `http://maps.googleapis.com/maps/api/geocode/json?sensor=false&amp;address=1600+Amphitheatre+Parkway,+Mountain+View,+CA`
+
+
+---
+
+## URL encoding
+
+This is will often be handled automatically by your web browser or other tool, but it is useful to know a bit about what is happening
+
+* Spaces will encoded as '+' or '%20'
+
+* Certain characters are reserved and will be replaced with the percent-encoded version within a URL
+
+|     |     |     |     |     |     |     |
+|-----|-----|-----|-----|-----|-----|-----|
+| !   | #   | $   | &amp;   | '   | (   | )   |
+| %21 | %23 | %24 | %26 | %27 | %28 | %29 |
+| *   | +   | ,   | /   | :   | ;   | =   |
+| %2A | %2B | %2C | %2F | %3A | %3B | %3D |
+| ?   | @   | [   | ]   |
+| %3F | %40 | %5B | %5D |
+
+* Characters that cannot be converted to the correct charset are replaced with HTML numeric character references (e.g. a &amp;#931; would be encoded as &amp;amp;#931; )
+
+---
+
+
+```r
+URLencode("http://lmgtfy.com/?q=hello world")
+```
+
+```
+## [1] "http://lmgtfy.com/?q=hello%20world"
+```
+
+```r
+URLdecode(URLencode("http://lmgtfy.com/?q=hello world"))
+```
+
+```
+## [1] "http://lmgtfy.com/?q=hello world"
+```
+
+--
+
+
+```r
+URLencode("! # $ &amp; ' ( ) * + , / : ; = ? @ [ ]")
+```
+
+```
+## [1] "!%20#%20$%20&amp;%20'%20(%20)%20*%20+%20,%20/%20:%20;%20=%20?%20@%20[%20]"
+```
+
+```r
+URLdecode(URLencode("! # $ &amp; ' ( ) *  + , / : ; = ? @ [ ]"))
+```
+
+```
+## [1] "! # $ &amp; ' ( ) *  + , / : ; = ? @ [ ]"
+```
+
+--
+
+
+```r
+URLencode("Σ")
+```
+
+```
+## [1] "%CE%A3"
+```
+
+```r
+URLdecode(URLencode("Σ"))
+```
+
+```
+## [1] "Σ"
+```
+
+
+---
+class: middle
+count: false
+
+# RESTful APIs
+
+---
+
+## REST
+
+**Re**presentational **s**tate **t**ransfer 
+
+* describes an architectural style for web services (not a standard)
+
+* all communication via http requests
+
+* Key features: 
+    - addressible
+    - stateless
+    - connected 
+    - simple
+
+---
+
+## HTTP Methods / Verbs
+
+* *GET* - fetch a resource.
+
+* *POST* - create a new resource.
+
+* *PUT* - update a resource.
+
+* *DELETE* - delete a resource.
+
+Less common verbs: *HEAD*, *TRACE*, *OPTIONS*.
+
+.footnote[ Based on [HTTP: The Protocol Every Web Developer Must Know](http://code.tutsplus.com/tutorials/http-the-protocol-every-web-developer-must-know-part-1--net-31177) ]
+
+---
+
+## Status Codes
+
+* 1xx: Informational Messages
+
+* 2xx: Successful
+
+* 3xx: Redirection
+
+* 4xx: Client Error
+
+* 5xx: Server Error
+
+---
+class: middle
+
+## restcountries.eu
+
+---
+
+## Exercise 1
+
+Using the restcountries.eu API answer the following questions:
+
+1. How many countries are in this data set?
+
+2. Which countries are members of ASEAN (Association of Southeast Asian Nations)?
+
+3. What are all of the currencies used in the Americas?
+
+---
+class: middle
+
+## Github API Demo &amp; `httr`
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+  }
+});
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
